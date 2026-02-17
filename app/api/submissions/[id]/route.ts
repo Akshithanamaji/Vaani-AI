@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { 
-  getSubmission, 
-  viewSubmission, 
-  updateSubmissionDetails, 
-  updateSubmissionFields, 
+import {
+  getSubmission,
+  viewSubmission,
+  updateSubmissionDetails,
+  updateSubmissionFields,
   updateSubmissionStatus,
   submissions,
   isSubmissionFinal,
@@ -56,8 +56,8 @@ export async function GET(
         {
           success: false,
           error: 'Submission completed',
-          message: submission.status === 'collected' 
-            ? 'This application has been collected.' 
+          message: submission.status === 'collected'
+            ? 'This application has been collected.'
             : 'This application was rejected.',
           submission: {
             id: submission.id,
@@ -128,11 +128,11 @@ export async function PATCH(
         { status: 401 }
       );
     }
-    
+
     // STATUS MODE: change status and notify user
     if (mode === 'status' && newStatus) {
       const submission = updateSubmissionStatus(id, newStatus as SubmissionStatus, adminId, notes);
-      
+
       if (!submission) {
         return NextResponse.json(
           { error: 'Submission not found' },
@@ -147,8 +147,8 @@ export async function PATCH(
           submitted: { title: 'Application Submitted', message: `Your ${submission.serviceName} application has been submitted.`, type: 'info' },
           under_review: { title: 'Application Under Review', message: `Your ${submission.serviceName} application is now under review.`, type: 'info' },
           processing: { title: 'Application Processing', message: `Your ${submission.serviceName} application is being processed.`, type: 'info' },
-          completed: { title: 'Processing Completed', message: `Your ${submission.serviceName} processing is complete. Please wait for collection notice.`, type: 'success' },
-          ready_for_collection: { title: 'Ready for Collection', message: `Your ${submission.serviceName} is ready! Please visit the office to collect your document.`, type: 'success' },
+          completed: { title: 'Application Completed', message: `Your ${submission.serviceName} is completed! Please come and collect your card/document.`, type: 'success' },
+          ready_for_collection: { title: 'Ready for Collection', message: `Your ${submission.serviceName} is completed! Please come and collect your card/document.`, type: 'success' },
           collected: { title: 'Document Collected', message: `Your ${submission.serviceName} document has been collected. Thank you!`, type: 'success' },
           rejected: { title: 'Application Rejected', message: `Your ${submission.serviceName} application was rejected. ${notes || 'Please contact the office for details.'}`, type: 'error' },
         };
@@ -231,7 +231,7 @@ export async function PATCH(
       addNotification({
         userEmail,
         title: 'Ready for Collection',
-        message: `Your ${submission.serviceName} is ready! Please visit the office to collect your document.`,
+        message: `Your ${submission.serviceName} is completed! Please come and collect your card/document.`,
         type: 'success',
         serviceName: submission.serviceName,
         submissionId: submission.id,
