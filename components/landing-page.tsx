@@ -4,6 +4,32 @@ import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Mic, QrCode, Shield, Users, Languages, ArrowRight, CheckCircle2 } from 'lucide-react';
 
+// Falling animation keyframes
+const FALLING_ANIMATION = `
+  @keyframes fallDown {
+    0% {
+      opacity: 0;
+      transform: translateY(-100vh) rotate(10deg) scale(0.5);
+    }
+    60% {
+      opacity: 1;
+      transform: translateY(10px) rotate(-2deg) scale(1.05);
+    }
+    80% {
+      transform: translateY(-5px) rotate(1deg) scale(0.98);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0) rotate(0) scale(1);
+    }
+  }
+
+  .card-fall {
+    animation: fallDown 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    opacity: 0;
+  }
+`;
+
 interface Language {
   code: 'en' | 'hi' | 'te' | 'kn' | 'ta' | 'ml' | 'mr' | 'bn' | 'gu' | 'or' | 'pa' | 'ur';
   name: string;
@@ -210,34 +236,34 @@ export function LandingPage({ onGetStarted, onStartSpeaking, selectedLanguage }:
   const [isPlayingInstruction, setIsPlayingInstruction] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const currentLangIndex = useRef(0);
-  
+
   // Play voice instructions in all languages sequentially
   const playVoiceInstructions = async () => {
     if (isPlayingInstruction) return;
     setIsPlayingInstruction(true);
-    
+
     const languages = ['en', 'hi', 'te', 'ta', 'kn', 'ml', 'mr', 'bn', 'gu', 'pa', 'or', 'ur'];
     currentLangIndex.current = 0;
-    
+
     const playNextLanguage = async () => {
       if (currentLangIndex.current >= languages.length) {
         setIsPlayingInstruction(false);
         return;
       }
-      
+
       const lang = languages[currentLangIndex.current];
       const text = voiceInstructions[lang];
-      
+
       try {
         const response = await fetch(`/api/tts-proxy?text=${encodeURIComponent(text)}&lang=${lang}`);
         if (response.ok) {
           const blob = await response.blob();
           const url = URL.createObjectURL(blob);
-          
+
           if (audioRef.current) {
             audioRef.current.pause();
           }
-          
+
           audioRef.current = new Audio(url);
           audioRef.current.onended = () => {
             URL.revokeObjectURL(url);
@@ -259,34 +285,47 @@ export function LandingPage({ onGetStarted, onStartSpeaking, selectedLanguage }:
         playNextLanguage();
       }
     };
-    
+
     playNextLanguage();
   };
-  
+
   // Block Get Started if no language selected
   const handleGetStartedClick = (e?: React.MouseEvent) => {
     e?.preventDefault();
     e?.stopPropagation();
-    
+
     if (!selectedLanguage) {
       playVoiceInstructions();
       return;
     }
-    
+
     onGetStarted();
   };
-  
+
   return (
     <div className="min-h-screen bg-black">
-      {/* Header */}
+      {/* Inject falling animation styles */}
+      <style dangerouslySetInnerHTML={{ __html: FALLING_ANIMATION }} />
+
+      {/* ── Global animation keyframes ── */}
+      <style>{`
+        /* hover lift for cards */
+        .card-hover {
+          transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+        }
+        .card-hover:hover {
+          transform: translateY(-6px) scale(1.02);
+          box-shadow: 0 16px 40px rgba(0,0,0,0.4);
+        }
+      `}</style>
+
+      {/* ── HEADER ── */}
       <header className="sticky top-0 z-50 border-b border-white/10 bg-black/80 backdrop-blur-md">
         <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-cyan-500 to-purple-600 flex items-center justify-center">
-                <Mic className="h-6 w-6 text-white" />
-              </div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">Vaani Ai</span>
+              <img src="/logo.jpeg" alt="Logo" className="h-16 w-16 rounded-lg object-cover" />
+              <span className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">Services</span>
               {selectedLanguage && (
                 <div className="ml-4 inline-flex items-center gap-2 px-3 py-1 bg-white/10 text-gray-300 text-sm font-semibold rounded-full border border-white/20">
                   <span>{selectedLanguage.flag}</span>
@@ -306,57 +345,149 @@ export function LandingPage({ onGetStarted, onStartSpeaking, selectedLanguage }:
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="relative px-4 py-32 text-center">
-        <div className="max-w-3xl mx-auto">
-          <h1 className="text-5xl md:text-6xl font-bold mb-6">
+      {/* ── HERO SECTION ── */}
+      <section className="relative px-4 py-28 text-center overflow-hidden">
+        {/* ambient glow orbs */}
+        <div style={{ position: 'absolute', top: '-80px', left: '50%', transform: 'translateX(-50%)', width: 600, height: 600, background: 'radial-gradient(circle, rgba(6,182,212,0.07) 0%, transparent 70%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', bottom: '-60px', right: '10%', width: 400, height: 400, background: 'radial-gradient(circle, rgba(147,51,234,0.08) 0%, transparent 70%)', pointerEvents: 'none' }} />
+
+        <div className="max-w-3xl mx-auto relative">
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 border border-white/20 rounded-full text-sm text-cyan-300 font-medium mb-8 card-fall" style={{ animationDelay: '0s' }}>
+            🇮🇳 {currentLabels.digitalIndia}
+          </div>
+
+          <h1 className="text-5xl md:text-6xl font-bold mb-6 card-fall" style={{ animationDelay: '0.08s' }}>
             <span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-500 bg-clip-text text-transparent">
               {currentLabels.title}
             </span>
           </h1>
-          <p className="text-xl text-gray-400 mb-8 leading-relaxed">
+
+          <p className="text-xl text-gray-400 mb-3 leading-relaxed card-fall" style={{ animationDelay: '0.16s' }}>
             {currentLabels.subtitle}
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button onClick={onStartSpeaking} size="lg" className="bg-gradient-to-r from-cyan-500 to-purple-600 hover:opacity-90 text-white h-14 px-8 rounded-lg text-lg font-bold border-0 shadow-lg">
+          <p className="text-lg text-white font-bold mb-10 card-fall" style={{ animationDelay: '0.24s' }}>
+            No typing. No literacy barriers. No agents.
+          </p>
+
+          <div className="flex flex-col sm:flex-row gap-4 justify-center card-fall" style={{ animationDelay: '0.32s' }}>
+            <Button onClick={onStartSpeaking} size="lg" className="bg-gradient-to-r from-cyan-500 to-purple-600 hover:opacity-90 text-white h-14 px-8 rounded-lg text-lg font-bold border-0 shadow-lg" style={{ transition: 'transform 0.2s ease, opacity 0.2s ease' }}
+              onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.05)')}
+              onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}>
               <Mic className="mr-2 h-5 w-5" />
               {currentLabels.startSpeaking}
             </Button>
-            <Button onClick={handleGetStartedClick} size="lg" className={`h-14 px-8 rounded-lg text-lg font-bold border-0 shadow-sm ${selectedLanguage ? 'bg-white text-black hover:bg-gray-100' : 'bg-yellow-500/30 text-yellow-400 animate-pulse cursor-pointer'}`}>
-              {isPlayingInstruction ? '🔊 Listen...' : currentLabels.getStarted}
+            <Button
+              onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
+              size="lg"
+              className="h-14 px-8 rounded-lg text-lg font-bold bg-transparent text-white border border-white/30 hover:bg-white/10 shadow-sm"
+              style={{ transition: 'transform 0.2s ease' }}
+              onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.04)')}
+              onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
+            >
+              {currentLabels.learnMore}
             </Button>
           </div>
-        </div>
-      </section>
 
-      {/* Features Grid */}
-      <section className="px-4 py-20">
-        <div className="max-w-5xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12">
-            <span className="bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">
-              {currentLabels.whyVaani}
-            </span>
-          </h2>
-          <div className="grid md:grid-cols-2 gap-8">
-            <div className="p-6 bg-white rounded-lg shadow-sm border-0">
-              <QrCode className="h-8 w-8 text-cyan-500 mb-3" />
-              <h3 className="text-lg font-bold text-gray-900 mb-2">{currentLabels.secure}</h3>
-              <p className="text-gray-600">Your data is encrypted and automatically deleted after 24 hours.</p>
-            </div>
-            <div className="p-6 bg-white rounded-lg shadow-sm border-0">
-              <Languages className="h-8 w-8 text-purple-500 mb-3" />
-              <h3 className="text-lg font-bold text-gray-900 mb-2">{currentLabels.breakingBarriers}</h3>
-              <p className="text-gray-600">Speak in your own language. We support 12+ Indian languages.</p>
-            </div>
+          {/* Stats Row */}
+          <div className="mt-16 flex flex-wrap justify-center gap-6">
+            {[
+              { value: '5+', label: 'Languages' },
+              { value: '24hrs', label: 'QR Validity' },
+              { value: '100%', label: currentLabels.secure },
+            ].map((stat, index) => (
+              <div key={stat.label} className="card-hover px-8 py-5 bg-white/5 border border-white/10 rounded-2xl text-center min-w-[110px] card-fall" style={{ animationDelay: `${0.4 + (index * 0.08)}s` }}>
+                <div className="text-3xl font-extrabold bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">{stat.value}</div>
+                <div className="text-sm text-gray-400 mt-1">{stat.label}</div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
+      {/* ── WHY VAANI AI — 6-card grid ── */}
+      <section className="px-4 py-20 border-t border-white/10">
+        <div className="max-w-5xl mx-auto">
+          <h2 className="text-4xl font-bold text-center text-white mb-3 card-fall" style={{ animationDelay: '0.64s' }}>
+            {currentLabels.whyVaani}
+          </h2>
+          <p className="text-center text-gray-400 mb-14 card-fall" style={{ animationDelay: '0.72s' }}>
+            {currentLabels.breakingBarriers}
+          </p>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[
+              { icon: <Mic className="h-6 w-6 text-cyan-400" />, bg: 'bg-cyan-500/20', title: 'Voice-First Interface', desc: 'Speak in Hindi, Telugu, Tamil, Bengali, or English. No typing required.' },
+              { icon: <Languages className="h-6 w-6 text-purple-400" />, bg: 'bg-purple-500/20', title: 'Multi-Language Support', desc: 'Support for 5+ Indian languages with accurate speech recognition.' },
+              { icon: <Shield className="h-6 w-6 text-emerald-400" />, bg: 'bg-emerald-500/20', title: 'Secure & Private', desc: 'End-to-end encryption. Data deleted after 24 hours automatically.' },
+              { icon: <QrCode className="h-6 w-6 text-yellow-400" />, bg: 'bg-yellow-500/20', title: 'Instant QR Generation', desc: 'Get your unique QR code instantly. Officers can scan and print.' },
+              { icon: <Users className="h-6 w-6 text-rose-400" />, bg: 'bg-rose-500/20', title: 'No Middlemen', desc: 'Direct access. No agents, no fees, no exploitation.' },
+              { icon: <CheckCircle2 className="h-6 w-6 text-blue-400" />, bg: 'bg-blue-500/20', title: 'Easy for Everyone', desc: 'Designed for rural, elderly, and low-literacy citizens.' },
+            ].map((card, index) => (
+              <div
+                key={card.title}
+                className={`card-hover p-7 bg-white/5 border border-white/10 rounded-2xl card-fall`}
+                style={{ animationDelay: `${0.8 + (index * 0.08)}s` }}
+              >
+                <div className={`h-12 w-12 rounded-xl ${card.bg} flex items-center justify-center mb-4`}>
+                  {card.icon}
+                </div>
+                <h3 className="text-base font-bold text-white mb-2">{card.title}</h3>
+                <p className="text-sm text-gray-400 leading-relaxed">{card.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── HOW IT WORKS — 3 steps ── */}
+      <section id="how-it-works" className="px-4 py-20 border-t border-white/10">
+        <div className="max-w-5xl mx-auto">
+          <h2 className="text-4xl font-bold text-center text-white mb-3 card-fall" style={{ animationDelay: '1.28s' }}>
+            {currentLabels.howItWorks}
+          </h2>
+          <p className="text-center text-gray-400 mb-14 card-fall" style={{ animationDelay: '1.36s' }}>
+            Three simple steps to fill your government form
+          </p>
+
+          <div className="grid sm:grid-cols-3 gap-6">
+            {[
+              { num: '1', title: 'Speak Your Details', desc: 'Choose your language and speak your information naturally. Our AI understands your voice.' },
+              { num: '2', title: 'Review & Confirm', desc: 'Check the auto-filled form. Make any corrections if needed.' },
+              { num: '3', title: 'Get QR Code', desc: 'Receive a unique QR code. Show it to the officer to print your form instantly.' },
+            ].map((step, index) => (
+              <div
+                key={step.num}
+                className="card-hover p-8 bg-white/5 border border-white/10 rounded-2xl text-center card-fall"
+                style={{ animationDelay: `${1.44 + (index * 0.08)}s` }}
+              >
+                <div className="h-14 w-14 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 flex items-center justify-center mx-auto mb-5 text-white text-xl font-extrabold">
+                  {step.num}
+                </div>
+                <h3 className="text-base font-bold text-white mb-3">{step.title}</h3>
+                <p className="text-sm text-gray-400 leading-relaxed">{step.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── CTA SECTION ── */}
       <section className="px-4 py-20">
-        <div className="max-w-3xl mx-auto bg-gradient-to-r from-cyan-500 to-purple-600 p-12 rounded-2xl text-white text-center shadow-lg">
+        <div
+          className="max-w-3xl mx-auto bg-gradient-to-r from-cyan-500 to-purple-600 p-12 rounded-2xl text-white text-center shadow-lg card-hover card-fall"
+          style={{ animationDelay: '1.68s' }}
+        >
           <h2 className="text-4xl font-bold mb-4">{currentLabels.readyStarted}</h2>
-          <Button onClick={handleGetStartedClick} size="lg" className={`h-14 px-10 rounded-full text-lg font-bold border-0 ${selectedLanguage ? 'bg-white text-gray-900 hover:bg-gray-100' : 'bg-yellow-400 text-black animate-pulse'}`}>
+          <p className="text-white/80 mb-8 text-lg">Join thousands of citizens using Vaani Ai for hassle-free government services</p>
+          <Button
+            onClick={handleGetStartedClick}
+            size="lg"
+            className={`h-14 px-10 rounded-full text-lg font-bold border-0 ${selectedLanguage ? 'bg-white text-gray-900 hover:bg-gray-100' : 'bg-yellow-400 text-black animate-pulse'}`}
+            style={{ transition: 'transform 0.2s ease' }}
+            onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.06)')}
+            onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
+          >
             {isPlayingInstruction ? '🔊 Listen...' : currentLabels.startNow}
           </Button>
         </div>
@@ -364,3 +495,5 @@ export function LandingPage({ onGetStarted, onStartSpeaking, selectedLanguage }:
     </div>
   );
 }
+
+

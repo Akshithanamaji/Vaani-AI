@@ -97,6 +97,7 @@ export interface TranslationKeys {
     couldNotStartMic: string;
     micAccessDenied: string;
     securityError: string;
+    invalidInput: string;
 }
 
 export const translations: Record<string, TranslationKeys> = {
@@ -196,6 +197,7 @@ export const translations: Record<string, TranslationKeys> = {
         couldNotStartMic: 'Could not start microphone. Please refresh and try again.',
         micAccessDenied: 'Microphone access denied. Please check your browser settings.',
         securityError: 'Security error. Please use HTTPS or localhost.',
+        invalidInput: 'Invalid input. Please try again.',
     },
     hi: {
         title: 'वॉयस-पावर्ड सरकारी फॉर्म',
@@ -293,6 +295,7 @@ export const translations: Record<string, TranslationKeys> = {
         couldNotStartMic: 'माइक्रोफ़ोन प्रारंभ नहीं हो सका। कृपया रिफ्रेश करें और पुनः प्रयास करें।',
         micAccessDenied: 'माइक्रोफ़ोन एक्सेस अस्वीकृत। कृपया अपनी ब्राउज़र सेटिंग्स जांचें।',
         securityError: 'सुरक्षा त्रुटि। कृपया HTTPS या localhost का उपयोग करें।',
+        invalidInput: 'अमान्य इनपुट। कृपया पुनः प्रयास करें।',
     },
     te: {
         title: 'వాయిస్-ఆధారిత ప్రభుత్వ ఫారమ్‌లు',
@@ -390,6 +393,7 @@ export const translations: Record<string, TranslationKeys> = {
         couldNotStartMic: 'మైక్రోఫోన్ ప్రారంభించలేకపోయింది। దయచేసి రిఫ్రెష్ చేసి మళ్ళీ ప్రయత్నించండి।',
         micAccessDenied: 'మైక్రోఫోన్ యాక్సెస్ తిరస్కరించబడింది। దయచేసి మీ బ్రౌజర్ సెట్టింగ్‌లను తనిఖీ చేయండి।',
         securityError: 'భద్రతా లోపం। దయచేసి HTTPS లేదా localhost ఉపయోగించండి।',
+        invalidInput: 'చెల్లని ఇన్‌పుట్. దయచేసి మళ్ళీ ప్రయత్నించండి.',
     },
     kn: {
         title: 'ವಾಯಿಸ್-ಆಧಾರಿತ ಸರ್ಕಾರಿ ಫಾರ್ಮ್‌ಗಳು',
@@ -487,6 +491,7 @@ export const translations: Record<string, TranslationKeys> = {
         couldNotStartMic: 'ಮೈಕ್ರೋಫೋನ್ ಪ್ರಾರಂಭಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ। ದಯವಿಟ್ಟು ರಿಫ್ರೆಶ್ ಮಾಡಿ ಮತ್ತು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ।',
         micAccessDenied: 'ಮೈಕ್ರೋಫೋನ್ ಪ್ರವೇಶ ನಿರಾಕರಿಸಲಾಗಿದೆ। ದಯವಿಟ್ಟು ನಿಮ್ಮ ಬ್ರೌಸರ್ ಸೆಟ್ಟಿಂಗ್‌ಗಳನ್ನು ಪರಿಶೀಲಿಸಿ।',
         securityError: 'ಭದ್ರತಾ ದೋಷ। ದಯವಿಟ್ಟು HTTPS ಅಥವಾ localhost ಬಳಸಿ।',
+        invalidInput: 'ಅಮಾನ್ಯ ಇನ್‌ಪುಟ್. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.',
     },
     ta: {
         title: 'குரல் சக்தியால் கட்டப்பட்ட அரசாங்க ஆவணங்கள்',
@@ -584,6 +589,7 @@ export const translations: Record<string, TranslationKeys> = {
         couldNotStartMic: 'மைக்ரஃபோனை தொடங்க முடியவில்லை। தயவுசெய்து புதுப்பித்து மீண்டும் முயற்சிக்கவும்।',
         micAccessDenied: 'மைக்ரஃபோன் அணுகல் மறுக்கப்பட்டது। தயவுசெய்து உங்கள் உலாவி அமைப்புகளைச் சரிபார்க்கவும்।',
         securityError: 'பாதுகாப்பு பிழை। தயவுசெய்து HTTPS அல்லது localhost ஐப் பயன்படுத்தவும்।',
+        invalidInput: 'தவறான உள்ளீடு. தயவுசெய்து மீண்டும் முயற்சிக்கவும்.',
     },
     ml: {
         title: 'കണ്ഠസ്വര ആധാരിത സരകാരി ഫോമുകൾ',
@@ -681,6 +687,7 @@ export const translations: Record<string, TranslationKeys> = {
         couldNotStartMic: 'മൈക്രോഫോൺ ആരംഭിക്കാനായില്ല। ദയവായി പുതുക്കി വീണ്ടും ശ്രമിക്കുക।',
         micAccessDenied: 'മൈക്രോഫോൺ ആക്‌സസ്സ് നിഷേധിച്ചു। ദയവായി നിങ്ങളുടെ ബ്രൗസർ ക്രമീകരണങ്ങൾ പരിശോധിക്കുക।',
         securityError: 'സുരക്ഷാ പിശക്। ദയവായി HTTPS അല്ലെങ്കിൽ localhost ഉപയോഗിക്കുക।',
+        invalidInput: 'അസാധുവായ ഇൻപുട്ട്. ദയവായി വീണ്ടും ശ്രമിക്കുക.',
     },
     mr: {
         title: 'वॉयस-पावर्ड सरकारी फॉर्म',
@@ -778,6 +785,7 @@ export const translations: Record<string, TranslationKeys> = {
         couldNotStartMic: 'मायक्रोफोन सुरू करता आला नाही। कृपया रिफ्रेश करा आणि पुन्हा प्रयत्न करा।',
         micAccessDenied: 'मायक्रोफोन प्रवेश नाकारला। कृपया तुमची ब्राउझर सेटिंग्ज तपासा।',
         securityError: 'सुरक्षा त्रुटी। कृपया HTTPS किंवा localhost वापरा।',
+        invalidInput: 'अमान्य इनपुट. कृपया पुन्हा प्रयत्न करा.',
     },
     bn: {
         title: 'বাণী AI পোর্টাল',
@@ -875,6 +883,7 @@ export const translations: Record<string, TranslationKeys> = {
         couldNotStartMic: 'মাইক্রোফোন শুরু করা যায়নি। দয়া করে রিফ্রেশ করুন এবং আবার চেষ্টা করুন।',
         micAccessDenied: 'মাইক্রোফোন অ্যাক্সেস অস্বীকৃত। দয়া করে আপনার ব্রাউজার সেটিংস পরীক্ষা করুন।',
         securityError: 'নিরাপত্তা ত্রুটি। দয়া করে HTTPS বা localhost ব্যবহার করুন।',
+        invalidInput: 'অকার্যকর ইনপুট। দয়া করে আবার চেষ্টা করুন।',
     },
     gu: {
         title: 'વાણી AI પોર્ટલ',
@@ -972,6 +981,7 @@ export const translations: Record<string, TranslationKeys> = {
         couldNotStartMic: 'માઇક્રોફોન શરૂ કરી શક્યા નહીં। કૃપા કરીને રિફ્રેશ કરો અને ફરીથી પ્રયાસ કરો।',
         micAccessDenied: 'માઇક્રોફોન ઍક્સેસ નકારી કાઢવામાં આવી। કૃપા કરીને તમારી ব্રાઉજર સેટિંગ્સ તપાસો।',
         securityError: 'સુરક્ષા ભૂલ। કૃપા કરીને HTTPS અથવા localhost નો ઉપયોગ કરો।',
+        invalidInput: 'અમાન્ય ઇનપુટ. કૃપા કરીને ફરીથી પ્રયત્ન કરો.',
     },
     or: {
         title: 'ବାଣୀ AI ପୋର୍ଟାଲ୍',
@@ -1069,6 +1079,7 @@ export const translations: Record<string, TranslationKeys> = {
         couldNotStartMic: 'ମାଇକ୍ରୋଫୋନ୍ ଆରମ୍ଭ କରିପାରିଲା ନାହିଁ। ଦୟାକରି ରିଫ୍ରେସ୍ କରନ୍ତୁ ଏବଂ ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।',
         micAccessDenied: 'ମାଇକ୍ରୋଫୋନ୍ ଆକ୍ସେସ୍ ପ୍ରତ୍ୟାଖ୍ୟାନ କରାଯାଇଛି। ଦୟାକରି ଆପଣଙ୍କର ବ୍ରାଉଜର ସେଟିଂସ୍ ଯାଞ୍ଚ କରନ୍ତୁ।',
         securityError: 'ସୁରକ୍ଷା ତ୍ରୁଟି। ଦୟାକରି HTTPS କିମ୍ବା localhost ବ୍ୟବହାର କରନ୍ତୁ।',
+        invalidInput: 'ଅବୈଧ ଇନପୁଟ୍। ଦୟାକରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।',
     },
     pa: {
         title: 'ਵਾਣੀ AI ਪੋਰਟਲ',
@@ -1166,6 +1177,7 @@ export const translations: Record<string, TranslationKeys> = {
         couldNotStartMic: 'ਮਾਈਕ੍ਰੋਫੋਨ ਸ਼ੁਰੂ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਿਆ। ਕਿਰਪਾ ਕਰਕੇ ਰਿਫ੍ਰੈਸ਼ ਕਰੋ ਅਤੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।',
         micAccessDenied: 'ਮਾਈਕ੍ਰੋਫੋਨ ਪਹੁੰਚ ਅਸਵੀਕਾਰ ਕੀਤੀ ਗਈ। ਕਿਰਪਾ ਕਰਕੇ ਆਪਣੀਆਂ ਬ੍ਰਾਊਜ਼ਰ ਸੈਟਿੰਗਾਂ ਦੀ ਜਾਂਚ ਕਰੋ।',
         securityError: 'ਸੁਰੱਖਿਆ ਤ੍ਰੁੱਟੀ। ਕਿਰਪਾ ਕਰਕੇ HTTPS ਜਾਂ localhost ਵਰਤੋਂ।',
+        invalidInput: 'ਅਮਾਨਯ ਇਨਪੁਟ. ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।',
     },
     ur: {
         title: 'وانی AI پورٹل',
@@ -1263,6 +1275,7 @@ export const translations: Record<string, TranslationKeys> = {
         couldNotStartMic: 'مائیکروفون شروع نہیں ہو سکا۔ برائے مہربانی ریفریش کریں اور دوبارہ کوشش کریں۔',
         micAccessDenied: 'مائیکروفون رسائی مسترد کر دی گئی۔ برائے مہربانی اپنی براؤزر کی ترتیبات چیک کریں۔',
         securityError: 'حفاظتی خرابی۔ برائے مہربانی HTTPS یا localhost استعمال کریں۔',
+        invalidInput: 'غلط ان پٹ۔ براہ کرم دوبارہ کوشش کریں۔',
     }
 };
 

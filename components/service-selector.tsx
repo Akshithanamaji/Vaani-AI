@@ -9,6 +9,32 @@ import { speakText, stopSpeaking } from '@/lib/voice-utils';
 import { Search, Mic, Shield, Languages, Lock, Mic2 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 
+// Falling animation keyframes
+const FALLING_ANIMATION = `
+  @keyframes fallDown {
+    0% {
+      opacity: 0;
+      transform: translateY(-100vh) rotate(10deg) scale(0.5);
+    }
+    60% {
+      opacity: 1;
+      transform: translateY(10px) rotate(-2deg) scale(1.05);
+    }
+    80% {
+      transform: translateY(-5px) rotate(1deg) scale(0.98);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0) rotate(0) scale(1);
+    }
+  }
+
+  .card-fall {
+    animation: fallDown 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    opacity: 0;
+  }
+`;
+
 interface Language {
   code: string;
   name: string;
@@ -40,6 +66,7 @@ const ServiceSelectorComponent = ({ onSelectService, language, onServiceSelected
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [filteredServices, setFilteredServices] = useState(GOVERNMENT_SERVICES);
   const [isListening, setIsListening] = useState(false);
+  const [animatedCards, setAnimatedCards] = useState<Set<number>>(new Set());
 
   // Reduced categories for cleaner UI
   const MAIN_CATEGORIES = ['Identity', 'Finance', 'Health', 'Education', 'Employment', 'Transport'];
@@ -63,6 +90,17 @@ const ServiceSelectorComponent = ({ onSelectService, language, onServiceSelected
 
     setFilteredServices(filtered);
   }, [searchTerm, selectedCategory]);
+
+  // Trigger falling animation for each card one by one
+  useEffect(() => {
+    setAnimatedCards(new Set()); // Reset animation
+    
+    filteredServices.forEach((service, index) => {
+      setTimeout(() => {
+        setAnimatedCards(prev => new Set(prev).add(service.id));
+      }, 800 + (index * 80)); // Start cards after hero section (800ms) with 80ms delay between each
+    });
+  }, [filteredServices]);
 
   const handleServiceClick = (service: any) => {
     // Speak service selection
@@ -299,11 +337,14 @@ const ServiceSelectorComponent = ({ onSelectService, language, onServiceSelected
 
   return (
     <div className="min-h-screen bg-black">
+      {/* Inject falling animation styles */}
+      <style dangerouslySetInnerHTML={{ __html: FALLING_ANIMATION }} />
+      
       {/* Hero Section */}
       <div className="max-w-6xl mx-auto px-6 pt-12 pb-16">
         {/* Small Tag */}
         <div className="flex justify-center mb-6">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-sm font-medium text-gray-300 border border-white/20">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-sm font-medium text-gray-300 border border-white/20 card-fall" style={{ animationDelay: '0s' }}>
             <span className="text-cyan-400">✦</span>
             {currentLabels.subtitle}
           </div>
@@ -311,18 +352,18 @@ const ServiceSelectorComponent = ({ onSelectService, language, onServiceSelected
 
         {/* Main Title */}
         <div className="text-center mb-10">
-          <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-4 tracking-tight">
+          <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-4 tracking-tight card-fall" style={{ animationDelay: '0.08s' }}>
             <span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-500 bg-clip-text text-transparent">
               {currentLabels.title}
             </span>
           </h1>
-          <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+          <p className="text-gray-400 text-lg max-w-2xl mx-auto card-fall" style={{ animationDelay: '0.16s' }}>
             Fill government forms using your voice in your local language
           </p>
         </div>
 
         {/* Search Bar */}
-        <div className="max-w-2xl mx-auto mb-8">
+        <div className="max-w-2xl mx-auto mb-8 card-fall" style={{ animationDelay: '0.24s' }}>
           <div className="relative bg-white/10 backdrop-blur-md rounded-2xl border border-white/20">
             <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
             <Input
@@ -349,14 +390,15 @@ const ServiceSelectorComponent = ({ onSelectService, language, onServiceSelected
           <Button
             variant="ghost"
             onClick={() => setSelectedCategory('All')}
-            className={`h-9 px-4 rounded-full text-sm font-medium transition-all ${selectedCategory === 'All'
+            className={`h-9 px-4 rounded-full text-sm font-medium transition-all card-fall ${selectedCategory === 'All'
               ? 'bg-gradient-to-r from-cyan-500 to-purple-500 text-white'
               : 'bg-white/10 text-gray-300 hover:bg-white/20 border border-white/20'
               }`}
+            style={{ animationDelay: '0.32s' }}
           >
             {currentLabels.All}
           </Button>
-          {MAIN_CATEGORIES.map((category) => {
+          {MAIN_CATEGORIES.map((category, index) => {
             const icons: Record<string, string> = {
               Identity: '🆔',
               Finance: '💰',
@@ -370,10 +412,11 @@ const ServiceSelectorComponent = ({ onSelectService, language, onServiceSelected
                 key={category}
                 variant="ghost"
                 onClick={() => setSelectedCategory(category)}
-                className={`h-9 px-4 rounded-full text-sm font-medium transition-all ${selectedCategory === category
+                className={`h-9 px-4 rounded-full text-sm font-medium transition-all card-fall ${selectedCategory === category
                   ? 'bg-gradient-to-r from-cyan-500 to-purple-500 text-white'
                   : 'bg-white/10 text-gray-300 hover:bg-white/20 border border-white/20'
                   }`}
+                style={{ animationDelay: `${0.32 + ((index + 1) * 0.06)}s` }}
               >
                 {icons[category]} {currentLabels[category] || category}
               </Button>
@@ -382,7 +425,7 @@ const ServiceSelectorComponent = ({ onSelectService, language, onServiceSelected
         </div>
 
         {/* Services Count */}
-        <p className="text-center text-gray-500 text-sm mb-6">
+        <p className="text-center text-gray-500 text-sm mb-6 card-fall" style={{ animationDelay: '0.74s' }}>
           {filteredServices.length} {currentLabels.servicesFound}
         </p>
       </div>
@@ -390,12 +433,19 @@ const ServiceSelectorComponent = ({ onSelectService, language, onServiceSelected
       {/* Services Grid Section */}
       <div className="max-w-7xl mx-auto px-6 pb-16">
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-          {filteredServices.map((service) => {
+          {filteredServices.map((service, index) => {
             const translatedService = getTranslatedService(service, langCode);
+            const isAnimated = animatedCards.has(service.id);
+            
             return (
               <Card
                 key={service.id}
-                className="p-4 bg-neutral-900 hover:bg-neutral-800 hover:shadow-xl hover:scale-105 cursor-pointer transition-all duration-300 rounded-2xl group border border-neutral-800"
+                className={`p-4 bg-neutral-900 hover:bg-neutral-800 hover:shadow-xl hover:scale-105 cursor-pointer transition-all duration-300 rounded-2xl group border border-neutral-800 ${
+                  isAnimated ? 'card-fall' : 'opacity-0'
+                }`}
+                style={{
+                  animationDelay: `${0.8 + (index * 0.08)}s`
+                }}
                 onClick={() => handleServiceClick(translatedService)}
               >
                 <div className="flex flex-col items-center text-center gap-3">

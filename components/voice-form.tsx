@@ -26,6 +26,7 @@ import QRDisplay from './qr-display';
 interface VoiceFormProps {
   serviceName?: string;
   service?: any;
+  userEmail?: string;
   language?: string;
   selectedLocation?: { state: string; district: string };
   onSubmitSuccess?: () => void;
@@ -42,7 +43,7 @@ interface BackendResponse {
   error?: string;
 }
 
-const VoiceFormComponent = ({ service, language = 'en-IN', selectedLocation, onSubmitSuccess, onSubmit, onBack }: VoiceFormProps) => {
+const VoiceFormComponent = ({ service, userEmail, language = 'en-IN', selectedLocation, onSubmitSuccess, onSubmit, onBack }: VoiceFormProps) => {
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [currentFieldIndex, setCurrentFieldIndex] = useState(0);
   const [isListening, setIsListening] = useState(false);
@@ -57,14 +58,14 @@ const VoiceFormComponent = ({ service, language = 'en-IN', selectedLocation, onS
 
   const fields = service?.fields || [];
   const currentField = fields[currentFieldIndex];
-  
+
   // Get translation strings for current language
   const langCode = (typeof language === 'string' ? language.split('-')[0] : 'en');
   const t = translations[langCode] || translations['en'];
-  
+
   // Get translated service name and description
   const translatedService = service ? getTranslatedService(service, langCode) : service;
-  
+
   // Helper function to get translated field label
   const getFieldLabel = (fieldId: string, fallbackLabel: string) => {
     const translation = FIELD_TRANSLATIONS[fieldId]?.[langCode];
@@ -158,10 +159,31 @@ const VoiceFormComponent = ({ service, language = 'en-IN', selectedLocation, onS
       console.log('[VoiceForm] Backend response received:', JSON.stringify(result, null, 2));
 
       if (result.success) {
+        let transcriptToSave = transcript;
+
+        // CLIENT SIDE VALIDATION OVERRIDE
+        if (currentField?.validation) {
+          const { pattern, message } = currentField.validation;
+          const lang = (language || 'en-IN').split('-')[0];
+
+          // Clean transcript (remove spaces if it should be numeric)
+          if (pattern && pattern.includes('0-9')) {
+            transcriptToSave = transcriptToSave.replace(/\s+/g, '');
+          }
+
+          if (pattern && !new RegExp(pattern).test(transcriptToSave)) {
+            const errorMsg = message?.[lang] || message?.['en'] || t.invalidInput;
+            setVoiceError(errorMsg);
+            speakText(errorMsg, language);
+            setIsProcessing(false);
+            return;
+          }
+        }
+
         // Save the data to form
         setFormData((prev) => ({
           ...prev,
-          [fieldId]: transcript,
+          [fieldId]: transcriptToSave,
         }));
 
         // Store backend response for display
@@ -169,7 +191,6 @@ const VoiceFormComponent = ({ service, language = 'en-IN', selectedLocation, onS
         console.log('[VoiceForm] Backend response stored:', result.response);
 
         // Speak the backend response in the user's selected language
-        // speakText will automatically use browser TTS for Odia or fallback if needed
         await speakText(result.response, language);
 
         // Determine next action based on backend response
@@ -185,7 +206,7 @@ const VoiceFormComponent = ({ service, language = 'en-IN', selectedLocation, onS
               setIsReviewing(true);
               setIsProcessing(false);
             }
-          }, 2000); // Give user time to hear the confirmation
+          }, 2000);
         } else if (result.action === 'retry') {
           // Field is invalid or empty - ask user to try again
           console.log('[VoiceForm] Invalid input - user needs to retry');
@@ -383,6 +404,7 @@ const VoiceFormComponent = ({ service, language = 'en-IN', selectedLocation, onS
       if (!trimmedValue || trimmedValue.length === 0) {
         console.log('[VoiceForm] Cannot proceed - file not uploaded:', currentField?.id);
         setVoiceError(t.pleaseUploadFile);
+        speakText(t.pleaseUploadFile, language);
         return;
       }
     } else {
@@ -391,6 +413,20 @@ const VoiceFormComponent = ({ service, language = 'en-IN', selectedLocation, onS
         console.log('[VoiceForm] Cannot proceed - current field is empty:', currentField?.id);
         setVoiceError(t.pleaseFillField);
         return;
+      }
+
+      // Check validation pattern if it exists
+      if (currentField?.validation) {
+        const { pattern, message } = currentField.validation;
+        const langCode = (language || 'en-IN').split('-')[0];
+
+        if (pattern && !new RegExp(pattern).test(trimmedValue)) {
+          const errorMsg = message?.[langCode] || message?.['en'] || t.invalidInput;
+          console.log('[VoiceForm] Validation failed for field:', currentField.id, errorMsg);
+          setVoiceError(errorMsg);
+          speakText(errorMsg, language);
+          return;
+        }
       }
     }
 
@@ -422,9 +458,10 @@ const VoiceFormComponent = ({ service, language = 'en-IN', selectedLocation, onS
     try {
       setIsProcessing(true);
 
-      // Include location in user details
+      // Include location and user email in user details
       const submissionDetails = {
         ...formData,
+        ...(userEmail && { email: userEmail.trim().toLowerCase(), userEmail: userEmail.trim().toLowerCase() }),
         ...(selectedLocation && {
           _state: selectedLocation.state,
           _district: selectedLocation.district,
@@ -667,30 +704,54 @@ const VoiceFormComponent = ({ service, language = 'en-IN', selectedLocation, onS
                       </button>
                     </div>
                   ) : (
-                    <div className="relative">
-                      <Input
-                        type={currentField?.type || 'text'}
-                        value={formData[currentField?.id] || ''}
-                        onChange={(e) => setFormData(prev => ({ ...prev, [currentField.id]: e.target.value }))}
-                        placeholder={`${t.clickToSpeak} 🎙️`}
-                        readOnly={currentField?.type !== 'date'}
-                        className={
-                          `text-lg h-16 border-2 rounded-xl px-6 pr-16 transition-all duration-200 shadow-sm hover:shadow-md text-white placeholder:text-neutral-500 ` +
-                          (currentField?.type === 'date'
-                            ? 'border-neutral-800 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 bg-neutral-900 cursor-pointer'
-                            : 'border-neutral-800 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 bg-neutral-900 cursor-not-allowed')
-                        }
-                      />
-                      {/* Voice Icon for Input */}
-                      <button
-                        onClick={isListening ? handleStopListening : handleStartListening}
-                        disabled={isStarting}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-2xl hover:scale-110 transition-transform duration-200 active:scale-95 opacity-70 hover:opacity-100"
-                        title={isListening ? t.stopRecording : t.startVoiceInput}
-                      >
-                        {isListening ? '⏹️' : '🎙️'}
-                      </button>
-                    </div>
+                    <>
+                      <div className="relative">
+                        <Input
+                          type={currentField?.type || 'text'}
+                          value={formData[currentField?.id] || ''}
+                          onChange={(e) => setFormData(prev => ({ ...prev, [currentField.id]: e.target.value }))}
+                          placeholder={`${t.clickToSpeak} 🎙️`}
+                          readOnly={currentField?.type !== 'date'}
+                          style={{ colorScheme: 'dark' }}
+                          className={
+                            `text-lg h-16 border-2 rounded-xl px-6 pr-16 transition-all duration-200 shadow-sm hover:shadow-md text-white placeholder:text-neutral-500 ` +
+                            (currentField?.type === 'date'
+                              ? 'border-neutral-800 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 bg-neutral-900 cursor-pointer'
+                              : 'border-neutral-800 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 bg-neutral-900 cursor-not-allowed')
+                          }
+                        />
+                        {/* Voice Icon for Input */}
+                        <button
+                          onClick={isListening ? handleStopListening : handleStartListening}
+                          disabled={isStarting}
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-2xl hover:scale-110 transition-transform duration-200 active:scale-95 opacity-70 hover:opacity-100"
+                          title={isListening ? t.stopRecording : t.startVoiceInput}
+                        >
+                          {isListening ? '⏹️' : '🎙️'}
+                        </button>
+                      </div>
+
+                      {/* Display Options if available (e.g., Gender) */}
+                      {currentField?.options && (
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          {currentField.options.map((opt: { label: string; value: string }) => (
+                            <button
+                              key={opt.value}
+                              onClick={() => {
+                                setFormData(prev => ({ ...prev, [currentField.id]: opt.label }));
+                                setVoiceError(null);
+                              }}
+                              className={`px-4 py-2 rounded-full border-2 transition-all font-bold text-sm ${formData[currentField.id] === opt.label
+                                ? 'bg-cyan-500 border-cyan-500 text-white shadow-lg scale-105'
+                                : 'border-neutral-800 text-neutral-400 hover:border-neutral-700 hover:text-white bg-neutral-900'
+                                }`}
+                            >
+                              {opt.label}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </>
                   )}
 
                   {/* Voice Input Indicator */}

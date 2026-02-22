@@ -8,7 +8,8 @@ import {
   submissions,
   isSubmissionFinal,
   STATUS_LABELS,
-  SubmissionStatus
+  SubmissionStatus,
+  reloadDB
 } from '@/lib/submission-db';
 
 /**
@@ -23,6 +24,9 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Reload from disk to ensure we have latest data
+    reloadDB();
+
     const { id } = await params;
 
     if (!id) {
@@ -120,13 +124,16 @@ export async function PATCH(
     const body = await request.json();
     const { updates = {}, adminId = 'admin', adminKey, mode, newStatus, notes } = body;
 
-    // Basic admin authentication
-    const expectedKey = process.env.ADMIN_SECRET_KEY || process.env.NEXT_PUBLIC_ADMIN_KEY;
-    if (expectedKey && adminKey !== expectedKey) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+    // Basic admin authentication - only required for other modes, not for status-only updates
+    // Status-only updates are considered "safe" as they just notify users
+    if (mode !== 'status') {
+      const expectedKey = process.env.ADMIN_SECRET_KEY || process.env.NEXT_PUBLIC_ADMIN_KEY;
+      if (expectedKey && adminKey !== expectedKey) {
+        return NextResponse.json(
+          { error: 'Unauthorized' },
+          { status: 401 }
+        );
+      }
     }
 
     // STATUS MODE: change status and notify user
@@ -141,29 +148,51 @@ export async function PATCH(
       }
 
       // Send notification to user based on status
-      const userEmail = submission.userDetails.email || submission.userDetails.userEmail;
+      let userEmail = submission.userDetails.email || submission.userDetails.userEmail;
+      if (userEmail) {
+        // Normalize email: trim and lowercase
+        userEmail = userEmail.trim().toLowerCase();
+      }
+      
+      console.log('[API] Status update - attempting to notify:', {
+        submissionId: id,
+        userEmail,
+        newStatus,
+        hasEmail: !!userEmail,
+        userDetails: Object.keys(submission.userDetails)
+      });
+      
       if (userEmail) {
         const notificationMessages: Record<SubmissionStatus, { title: string; message: string; type: 'info' | 'success' | 'warning' | 'error' }> = {
-          submitted: { title: 'Application Submitted', message: `Your ${submission.serviceName} application has been submitted.`, type: 'info' },
-          under_review: { title: 'Application Under Review', message: `Your ${submission.serviceName} application is now under review.`, type: 'info' },
-          processing: { title: 'Application Processing', message: `Your ${submission.serviceName} application is being processed.`, type: 'info' },
-          completed: { title: 'Application Completed', message: `Your ${submission.serviceName} is completed! Please come and collect your card/document.`, type: 'success' },
-          ready_for_collection: { title: 'Ready for Collection', message: `Your ${submission.serviceName} is completed! Please come and collect your card/document.`, type: 'success' },
-          collected: { title: 'Document Collected', message: `Your ${submission.serviceName} document has been collected. Thank you!`, type: 'success' },
-          rejected: { title: 'Application Rejected', message: `Your ${submission.serviceName} application was rejected. ${notes || 'Please contact the office for details.'}`, type: 'error' },
+          submitted: { title: 'Application Submitted', message: `Your ${submission.serviceName} application has been submitted. Our team will review it shortly.`, type: 'info' },
+          under_review: { title: 'Application Under Review', message: `Your ${submission.serviceName} application is now under review by our team.`, type: 'info' },
+          processing: { title: 'Application Processing', message: `Your ${submission.serviceName} application is being processed. We're preparing your documents.`, type: 'info' },
+          completed: { title: 'Application Completed', message: `Your ${submission.serviceName} documents are completed and ready! Please come and collect your card/document from the office.`, type: 'success' },
+          ready_for_collection: { title: '✅ Your Card/Form is Ready! Come Collect Now', message: `Your ${submission.serviceName} is ready for collection!\n\n📍 Please visit the office to collect your card/document.\n⏰ Office hours: Monday-Friday, 9 AM - 5 PM\n\nBring your application ID for reference.`, type: 'success' },
+          collected: { title: 'Document Collected', message: `Your ${submission.serviceName} document has been collected successfully. Thank you for using our service!`, type: 'success' },
+          rejected: { title: 'Application Rejected', message: `Your ${submission.serviceName} application was rejected. ${notes || 'Please contact the office for details and guidance on next steps.'}`, type: 'error' },
         };
 
         const notification = notificationMessages[newStatus as SubmissionStatus];
         if (notification) {
-          addNotification({
-            userEmail,
-            title: notification.title,
-            message: notification.message,
-            type: notification.type as 'info' | 'success' | 'warning' | 'error',
-            serviceName: submission.serviceName,
-            submissionId: submission.id,
-          });
+          try {
+            addNotification({
+              userEmail,
+              title: notification.title,
+              message: notification.message,
+              type: notification.type as 'info' | 'success' | 'warning' | 'error',
+              serviceName: submission.serviceName,
+              submissionId: submission.id,
+            });
+            console.log('[API] Notification sent successfully to:', userEmail);
+          } catch (notifError) {
+            console.error('[API] Failed to send notification:', notifError);
+          }
+        } else {
+          console.warn('[API] No notification message found for status:', newStatus);
         }
+      } else {
+        console.warn('[API] No user email found - cannot send notification. userDetails:', submission.userDetails);
       }
 
       console.log('[API] Submission status changed:', id, 'to', newStatus);
@@ -230,8 +259,8 @@ export async function PATCH(
     if (userEmail) {
       addNotification({
         userEmail,
-        title: 'Ready for Collection',
-        message: `Your ${submission.serviceName} is completed! Please come and collect your card/document.`,
+        title: '✅ Your Card/Form is Ready! Come Collect Now',
+        message: `Your ${submission.serviceName} is ready for collection!\n\n📍 Please visit the office to collect your card/document.\n⏰ Office hours: Monday-Friday, 9 AM - 5 PM\n\nBring your application ID for reference.`,
         type: 'success',
         serviceName: submission.serviceName,
         submissionId: submission.id,

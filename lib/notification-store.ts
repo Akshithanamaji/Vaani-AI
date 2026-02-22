@@ -37,8 +37,12 @@ function saveNotificationsToFile(notifications: AppNotification[]) {
             fs.mkdirSync(dir, { recursive: true });
         }
         fs.writeFileSync(NOTIFICATIONS_FILE, JSON.stringify(notifications, null, 2), 'utf-8');
+        console.log('[NotificationStore] Saved', notifications.length, 'notifications to:', NOTIFICATIONS_FILE);
     } catch (error) {
-        console.error('Error writing notifications file:', error);
+        console.error('[NotificationStore] Error writing notifications file:', error, {
+            filePath: NOTIFICATIONS_FILE,
+            errorMessage: error instanceof Error ? error.message : String(error)
+        });
     }
 }
 
@@ -48,21 +52,35 @@ export function addNotification(notif: Omit<AppNotification, 'id' | 'timestamp' 
     // Reload to ensure we have latest state
     notifications = getNotificationsFromFile();
     
+    // Normalize email: trim whitespace and convert to lowercase
+    const normalizedEmail = notif.userEmail.trim().toLowerCase();
+    
     const newNotif: AppNotification = {
         ...notif,
+        userEmail: normalizedEmail,
         id: `NOTIF_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         timestamp: Date.now(),
         read: false
     };
     notifications.push(newNotif);
     saveNotificationsToFile(notifications);
+    console.log('[NotificationStore] Added notification:', {
+        userEmail: normalizedEmail,
+        title: notif.title,
+        timestamp: newNotif.timestamp,
+        id: newNotif.id
+    });
     return newNotif;
 }
 
 export function getNotifications(userEmail: string) {
     // Reload to ensure we have latest state
     notifications = getNotificationsFromFile();
-    return notifications.filter(n => n.userEmail === userEmail).sort((a, b) => b.timestamp - a.timestamp);
+    
+    // Normalize email: trim whitespace and convert to lowercase
+    const normalizedEmail = userEmail.trim().toLowerCase();
+    
+    return notifications.filter(n => n.userEmail === normalizedEmail).sort((a, b) => b.timestamp - a.timestamp);
 }
 
 export function markAsRead(id: string) {
@@ -75,6 +93,11 @@ export function markAsRead(id: string) {
 export function clearAll(userEmail: string) {
     // Reload to ensure we have latest state
     notifications = getNotificationsFromFile();
-    notifications = notifications.filter(n => n.userEmail !== userEmail);
+    
+    // Normalize email: trim whitespace and convert to lowercase
+    const normalizedEmail = userEmail.trim().toLowerCase();
+    
+    notifications = notifications.filter(n => n.userEmail !== normalizedEmail);
     saveNotificationsToFile(notifications);
 }
+

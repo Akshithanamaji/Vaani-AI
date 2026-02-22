@@ -124,6 +124,23 @@ export function saveDB() {
   }
 }
 
+/**
+ * Reload database from disk - ensures in-memory map is synced with file
+ * Call this before reading data in API endpoints
+ */
+export function reloadDB() {
+  try {
+    if (fs.existsSync(DB_FILE)) {
+      const data = fs.readFileSync(DB_FILE, 'utf-8');
+      const parsed = JSON.parse(data);
+      submissions = new Map(parsed);
+      console.log('[SubmissionDB] Reloaded', submissions.size, 'submissions from disk');
+    }
+  } catch (error) {
+    console.error('[SubmissionDB] Error reloading database:', error);
+  }
+}
+
 // Auto-initialize database when module loads
 initializeDB();
 
@@ -219,8 +236,8 @@ export function updateSubmissionStatus(
     submission.adminNotes = notes;
   }
 
-  // Mark as expired only when collected or rejected
-  if (newStatus === 'collected' || newStatus === 'rejected') {
+  // Mark as expired when status is ready_for_collection, collected or rejected
+  if (newStatus === 'ready_for_collection' || newStatus === 'collected' || newStatus === 'rejected') {
     submission.isExpired = true;
   }
 

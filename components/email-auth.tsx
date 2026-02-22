@@ -48,14 +48,17 @@ export function EmailAuth({ onAuthSuccess, language }: EmailAuthProps) {
 
     setLoading(true);
     try {
+      // Normalize email: trim and lowercase
+      const normalizedEmail = email.trim().toLowerCase();
+      
       // Save name and phone to localStorage
-      localStorage.setItem(`profile_name_${email}`, name);
-      localStorage.setItem(`profile_phone_${email}`, phone);
+      localStorage.setItem(`profile_name_${normalizedEmail}`, name);
+      localStorage.setItem(`profile_phone_${normalizedEmail}`, phone);
       
       // Small delay for UX
       await new Promise((resolve) => setTimeout(resolve, 300));
       
-      onAuthSuccess(email);
+      onAuthSuccess(normalizedEmail);
     } catch (err) {
       setError('An error occurred. Please try again.');
     } finally {

@@ -16,6 +16,7 @@ interface SubmittedService {
   status?: SubmissionStatus;
   statusLabel?: string;
   submittedAt: number;
+  isExpired?: boolean;
   userDetails: Record<string, string>;
   statusHistory?: Array<{
     status: string;
@@ -100,6 +101,7 @@ export default function SubmissionDetailsPage() {
   const status = submission?.status || 'submitted';
   const statusConfig = STATUS_CONFIG[status];
   const isFinal = status === 'collected' || status === 'rejected';
+  const isExpired = submission?.isExpired || ['ready_for_collection', 'collected', 'rejected'].includes(status);
   const StatusIcon = statusConfig?.icon || Clock;
 
   return (
@@ -111,7 +113,21 @@ export default function SubmissionDetailsPage() {
         </div>
 
         {submission ? (
-          <Card className="bg-white rounded-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
+          <>
+            {isExpired && (
+              <div className="mb-6 p-6 bg-red-50 border-2 border-red-300 rounded-2xl animate-pulse">
+                <div className="flex items-center gap-3 mb-2">
+                  <XCircle className="w-6 h-6 text-red-600" />
+                  <p className="text-lg font-black text-red-700 uppercase tracking-wide">Application Expired</p>
+                </div>
+                <p className="text-sm text-red-600 font-semibold">
+                  This application has been processed and is no longer available for editing. 
+                  {status === 'ready_for_collection' && ' Please visit the office to collect your document.'}
+                </p>
+              </div>
+            )}
+
+            <Card className="bg-white rounded-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
             <div className={`${status === 'rejected' ? 'bg-red-600' : status === 'ready_for_collection' ? 'bg-emerald-600' : status === 'collected' ? 'bg-gray-600' : 'bg-gradient-to-r from-cyan-500 to-purple-600'} px-6 py-4 flex items-center justify-between`}>
               <div className="flex items-center space-x-2 text-white">
                 <StatusIcon className="h-6 w-6" />
@@ -195,6 +211,7 @@ export default function SubmissionDetailsPage() {
               </div>
             </div>
           </Card>
+          </>
         ) : (
           <Card className="bg-white rounded-xl p-12 text-center animate-in fade-in duration-500">
             <div className="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-red-100 mb-6">

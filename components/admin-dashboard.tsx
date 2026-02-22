@@ -42,7 +42,7 @@ export const AdminDashboard = ({ restrictedServiceId, serviceName, adminState, a
   const [isVerifying, setIsVerifying] = useState(false);
   const [verifyingId, setVerifyingId] = useState<string | null>(null);
   const [editDetails, setEditDetails] = useState<Record<string, string>>({});
-  const [activeSection, setActiveSection] = useState<'submitted' | 'under_review' | 'processing' | 'completed' | 'ready_for_collection' | 'rejected'>('submitted');
+  const [activeSection, setActiveSection] = useState<'submitted' | 'under_review' | 'processing' | 'completed' | 'ready_for_collection' | 'collected' | 'rejected'>('submitted');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // Status labels and colors with icons - Modern clean design
@@ -305,6 +305,8 @@ export const AdminDashboard = ({ restrictedServiceId, serviceName, adminState, a
   // Update submission status
   const handleStatusUpdate = async (submissionId: string, newStatus: string, notes?: string) => {
     try {
+      console.log('[AdminDashboard] Updating status to:', newStatus, 'for submission:', submissionId);
+      
       const response = await fetch(`/api/submissions/${submissionId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -316,12 +318,25 @@ export const AdminDashboard = ({ restrictedServiceId, serviceName, adminState, a
         }),
       });
 
+      console.log('[AdminDashboard] Response status:', response.status);
+
       const data = await response.json();
+      
+      if (!response.ok) {
+        console.error('[AdminDashboard] API Error:', response.status, data);
+        const errorMsg = data.error || 'Failed to update status';
+        setToast({ show: true, msg: `❌ ${errorMsg}`, user: 'Error' });
+        setTimeout(() => setToast(null), 4000);
+        return false;
+      }
+
       if (data.success) {
-        // Update local state
+        console.log('[AdminDashboard] Status update successful');
+        
+        // Update local state immediately
         setSubmissions(prev => prev.map(sub => 
           sub.id === submissionId 
-            ? { ...sub, status: newStatus as any, statusLabel: data.submission.statusLabel }
+            ? { ...sub, status: newStatus as any, statusLabel: data.submission.statusLabel, isExpired: data.submission.isExpired }
             : sub
         ));
         
@@ -330,15 +345,39 @@ export const AdminDashboard = ({ restrictedServiceId, serviceName, adminState, a
             ...prev,
             status: newStatus as any,
             statusLabel: data.submission.statusLabel,
-            statusHistory: data.submission.statusHistory
+            statusHistory: data.submission.statusHistory,
+            isExpired: data.submission.isExpired
           } : null);
         }
         
-        alert(`Status updated to: ${STATUS_CONFIG[newStatus]?.label || newStatus}`);
+        // Show toast with notification confirmation
+        const userEmail = selectedSubmission?.userDetails.email || selectedSubmission?.userDetails.userEmail || 'user';
+        const statusMessages: Record<string, string> = {
+          'under_review': '📋 Status updated to Under Review',
+          'processing': '⚙️ Status updated to Processing',
+          'completed': '✅ Status updated to Completed',
+          'ready_for_collection': '✉️ Notification sent: Card/Form is ready for collection',
+          'rejected': '❌ Application rejected & notification sent',
+          'collected': '✓ Marked as collected',
+        };
+        
+        const toastMsg = statusMessages[newStatus] || `Status updated to ${newStatus}`;
+        setToast({ show: true, msg: `${toastMsg} • User notified`, user: userEmail });
+        setTimeout(() => setToast(null), 4000);
+        
+        return true;
       }
+      
+      console.error('[AdminDashboard] Status update returned false:', data);
+      setToast({ show: true, msg: '❌ Status update failed', user: 'Error' });
+      setTimeout(() => setToast(null), 4000);
+      return false;
     } catch (error) {
-      console.error('Error updating status:', error);
-      alert('Failed to update status');
+      console.error('[AdminDashboard] Exception during status update:', error);
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      setToast({ show: true, msg: `❌ Error: ${errorMsg}`, user: 'Error' });
+      setTimeout(() => setToast(null), 4000);
+      return false;
     }
   };
 
@@ -406,7 +445,15 @@ export const AdminDashboard = ({ restrictedServiceId, serviceName, adminState, a
               <Button
                 size="sm"
                 className="bg-yellow-500 hover:bg-yellow-600 text-white"
-                onClick={() => handleStatusUpdate(selectedSubmission.id, 'under_review')}
+                onClick={async () => {
+                  console.log('[AdminDashboard] Start Review clicked');
+                  await handleStatusUpdate(selectedSubmission.id, 'under_review');
+                  setSelectedSubmission(null);
+                  await loadSubmissions();
+                  await new Promise(resolve => setTimeout(resolve, 100));
+                  setActiveSection('under_review');
+                  console.log('[AdminDashboard] Switched to under_review section');
+                }}
               >
                 👁️ Start Review
               </Button>
@@ -416,7 +463,15 @@ export const AdminDashboard = ({ restrictedServiceId, serviceName, adminState, a
               <Button
                 size="sm"
                 className="bg-orange-500 hover:bg-orange-600 text-white"
-                onClick={() => handleStatusUpdate(selectedSubmission.id, 'processing')}
+                onClick={async () => {
+                  console.log('[AdminDashboard] Start Processing clicked');
+                  await handleStatusUpdate(selectedSubmission.id, 'processing');
+                  setSelectedSubmission(null);
+                  await loadSubmissions();
+                  await new Promise(resolve => setTimeout(resolve, 100));
+                  setActiveSection('processing');
+                  console.log('[AdminDashboard] Switched to processing section');
+                }}
               >
                 ⚙️ Start Processing
               </Button>
@@ -426,7 +481,15 @@ export const AdminDashboard = ({ restrictedServiceId, serviceName, adminState, a
               <Button
                 size="sm"
                 className="bg-green-500 hover:bg-green-600 text-white"
-                onClick={() => handleStatusUpdate(selectedSubmission.id, 'completed')}
+                onClick={async () => {
+                  console.log('[AdminDashboard] Mark Complete clicked');
+                  await handleStatusUpdate(selectedSubmission.id, 'completed');
+                  setSelectedSubmission(null);
+                  await loadSubmissions();
+                  await new Promise(resolve => setTimeout(resolve, 100));
+                  setActiveSection('completed');
+                  console.log('[AdminDashboard] Switched to completed section');
+                }}
               >
                 ✅ Mark Complete
               </Button>
@@ -436,7 +499,15 @@ export const AdminDashboard = ({ restrictedServiceId, serviceName, adminState, a
               <Button
                 size="sm"
                 className="bg-emerald-500 hover:bg-emerald-600 text-white"
-                onClick={() => handleStatusUpdate(selectedSubmission.id, 'ready_for_collection')}
+                onClick={async () => {
+                  console.log('[AdminDashboard] Ready for Collection clicked');
+                  await handleStatusUpdate(selectedSubmission.id, 'ready_for_collection');
+                  setSelectedSubmission(null);
+                  await loadSubmissions();
+                  await new Promise(resolve => setTimeout(resolve, 100));
+                  setActiveSection('ready_for_collection');
+                  console.log('[AdminDashboard] Switched to ready_for_collection section');
+                }}
               >
                 📦 Ready for Collection
               </Button>
@@ -448,10 +519,16 @@ export const AdminDashboard = ({ restrictedServiceId, serviceName, adminState, a
                 size="sm"
                 variant="outline"
                 className="border-red-300 text-red-600 hover:bg-red-50"
-                onClick={() => {
+                onClick={async () => {
                   const notes = prompt('Enter rejection reason:');
                   if (notes !== null) {
-                    handleStatusUpdate(selectedSubmission.id, 'rejected', notes || 'Application rejected');
+                    console.log('[AdminDashboard] Rejecting application with notes:', notes);
+                    await handleStatusUpdate(selectedSubmission.id, 'rejected', notes || 'Application rejected');
+                    setSelectedSubmission(null);
+                    await loadSubmissions();
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    setActiveSection('rejected');
+                    console.log('[AdminDashboard] Switched to rejected section');
                   }
                 }}
               >
@@ -672,12 +749,6 @@ export const AdminDashboard = ({ restrictedServiceId, serviceName, adminState, a
                     completed: 'ready_for_collection'
                   };
                   const nextStatus = statusWorkflow[currentStatus] || 'under_review';
-                  const statusMessages: Record<string, string> = {
-                    under_review: 'Application is now Under Review. User has been notified.',
-                    processing: 'Application is now being Processed. User has been notified.',
-                    completed: 'Application Completed! User has been notified.',
-                    ready_for_collection: 'Application is Ready for Collection. User has been notified to collect.'
-                  };
                   
                   try {
                     // First save any changes
@@ -695,13 +766,31 @@ export const AdminDashboard = ({ restrictedServiceId, serviceName, adminState, a
                     }
                     
                     // Then update status
-                    await handleStatusUpdate(selectedSubmission.id, nextStatus);
-                    alert(statusMessages[nextStatus] || 'Status updated successfully!');
-                    setSelectedSubmission(null);
-                    loadSubmissions();
+                    const statusUpdateSuccess = await handleStatusUpdate(selectedSubmission.id, nextStatus);
+                    
+                    if (statusUpdateSuccess) {
+                      // Close detail view
+                      setSelectedSubmission(null);
+                      
+                      // Reload all submissions from backend
+                      await loadSubmissions();
+                      
+                      // Small delay to ensure state updates
+                      await new Promise(resolve => setTimeout(resolve, 300));
+                      
+                      // Switch to the new status section
+                      setActiveSection(nextStatus as any);
+                      
+                      console.log('[AdminDashboard] Status updated to:', nextStatus, 'activeSection set to:', nextStatus);
+                    } else {
+                      console.error('[AdminDashboard] Status update failed');
+                      setToast({ show: true, msg: '❌ Failed to update status', user: 'Error' });
+                      setTimeout(() => setToast(null), 4000);
+                    }
                   } catch (e) {
-                    console.error(e);
-                    alert('Request failed');
+                    console.error('[AdminDashboard] Error:', e);
+                    setToast({ show: true, msg: '❌ Request failed', user: 'Error' });
+                    setTimeout(() => setToast(null), 4000);
                   } finally {
                     setIsVerifying(false);
                   }
@@ -744,13 +833,11 @@ export const AdminDashboard = ({ restrictedServiceId, serviceName, adminState, a
         <div className={`p-5 border-b border-gray-800 ${sidebarCollapsed ? 'px-3' : ''}`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-cyan-500 to-purple-600 rounded-xl flex items-center justify-center">
-                <span className="text-white font-black text-xl">V</span>
-              </div>
+              <img src="/logo.jpeg" alt="Logo" className="w-16 h-16 rounded-xl object-cover" />
               {!sidebarCollapsed && (
                 <div>
-                  <h1 className="font-black text-lg tracking-tight bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">Vaani</h1>
-                  <p className="text-[10px] text-gray-400 font-medium uppercase tracking-widest">Admin Portal</p>
+                  <h1 className="font-black text-lg tracking-tight bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">Admin</h1>
+                  <p className="text-[10px] text-gray-400 font-medium uppercase tracking-widest">Portal</p>
                 </div>
               )}
             </div>
@@ -788,13 +875,13 @@ export const AdminDashboard = ({ restrictedServiceId, serviceName, adminState, a
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-400">Pending</span>
                   <span className="text-lg font-bold text-amber-400">
-                    {filteredSubmissions.filter(s => ['submitted', 'under_review', 'processing'].includes(s.status || 'submitted')).length}
+                    {filteredSubmissions.filter(s => ['submitted', 'under_review', 'processing'].includes(s.status || 'submitted') && !s.isExpired && !['ready_for_collection', 'collected', 'rejected'].includes(s.status || '')).length}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-400">Completed</span>
                   <span className="text-lg font-bold text-emerald-400">
-                    {filteredSubmissions.filter(s => ['completed', 'ready_for_collection'].includes(s.status || '')).length}
+                    {filteredSubmissions.filter(s => ['completed', 'ready_for_collection'].includes(s.status || '') && !s.isExpired && !['ready_for_collection', 'collected', 'rejected'].includes(s.status || '')).length}
                   </span>
                 </div>
               </div>
@@ -833,7 +920,7 @@ export const AdminDashboard = ({ restrictedServiceId, serviceName, adminState, a
             <div className="mt-4 pt-4 border-t border-gray-800">
               <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-3 px-3">Recent Activity</p>
               <div className="space-y-2 max-h-40 overflow-y-auto">
-                {filteredSubmissions.slice(0, 5).map((sub, idx) => (
+                {filteredSubmissions.filter(s => !s.isExpired && !['ready_for_collection', 'collected', 'rejected'].includes(s.status || '')).slice(0, 5).map((sub, idx) => (
                   <div key={sub.id} className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-800 transition-colors cursor-pointer" onClick={() => handleVerifySubmission(sub)}>
                     <div className="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center text-xs font-bold text-white">
                       {(sub.userDetails.name || 'A')[0]}
@@ -844,7 +931,7 @@ export const AdminDashboard = ({ restrictedServiceId, serviceName, adminState, a
                     </div>
                   </div>
                 ))}
-                {filteredSubmissions.length === 0 && (
+                {filteredSubmissions.filter(s => !s.isExpired && !['ready_for_collection', 'collected', 'rejected'].includes(s.status || '')).length === 0 && (
                   <p className="text-xs text-gray-500 px-3 italic">No recent activity</p>
                 )}
               </div>
@@ -904,15 +991,13 @@ export const AdminDashboard = ({ restrictedServiceId, serviceName, adminState, a
         <div className="p-8">
           {/* Stats Cards */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-5 mb-8">
-            {Object.entries(STATUS_CONFIG).map(([key, config], idx) => {
-              const count = filteredSubmissions.filter(s => (s.status || 'submitted') === key).length;
-              const colors = ['border-t-cyan-500', 'border-t-amber-500', 'border-t-orange-500', 'border-t-emerald-500', 'border-t-teal-500', 'border-t-red-500'];
-              const icons = ['⭐', '👤', '📋', '✅', '📦', '❌'];
+            {Object.entries(STATUS_CONFIG).map(([key, config]) => {
+              const count = filteredSubmissions.filter(s => (s.status || 'submitted') === key && !s.isExpired && !['ready_for_collection', 'collected', 'rejected'].includes(s.status || '')).length;
               return (
                 <button
                   key={key}
                   onClick={() => setActiveSection(key as any)}
-                  className={`bg-white rounded-xl p-5 border-t-4 ${colors[idx]} hover:shadow-lg transition-all text-left ${
+                  className={`bg-white rounded-xl p-5 border-t-4 ${config.borderColor} hover:shadow-lg transition-all text-left ${
                     activeSection === key ? 'ring-2 ring-cyan-500 shadow-lg' : ''
                   }`}
                 >
@@ -922,7 +1007,7 @@ export const AdminDashboard = ({ restrictedServiceId, serviceName, adminState, a
                       <p className="text-xs text-gray-500 font-medium mt-1">{config.label}</p>
                     </div>
                     <div className={`w-10 h-10 ${config.bgColor} rounded-xl flex items-center justify-center text-lg`}>
-                      {icons[idx]}
+                      {config.icon}
                     </div>
                   </div>
                 </button>
@@ -977,7 +1062,7 @@ export const AdminDashboard = ({ restrictedServiceId, serviceName, adminState, a
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {(() => {
-                    const statusSubmissions = filteredSubmissions.filter(s => (s.status || 'submitted') === activeSection);
+                    const statusSubmissions = filteredSubmissions.filter(s => (s.status || 'submitted') === activeSection && !s.isExpired && !['ready_for_collection', 'collected', 'rejected'].includes(s.status || ''));
                     if (statusSubmissions.length === 0) {
                       return (
                         <tr>
@@ -1138,30 +1223,17 @@ export const AdminDashboard = ({ restrictedServiceId, serviceName, adminState, a
       {/* Toast Notification */}
       {toast && toast.show && (
         <div className="fixed bottom-8 right-8 z-[200] animate-in slide-in-from-right-10 duration-500">
-          <Card className="bg-white border-l-8 border-l-red-500 shadow-[0_10px_40px_rgba(0,0,0,0.15)] p-5 w-80 rounded-2xl flex items-start gap-4 ring-1 ring-slate-100">
-            <div className="w-10 h-10 bg-red-50 text-red-600 rounded-xl flex items-center justify-center shrink-0">
-              <ShieldAlert className="w-6 h-6" />
+          <Card className="bg-white border-l-8 border-l-green-500 shadow-[0_10px_40px_rgba(0,0,0,0.15)] p-5 w-80 rounded-2xl flex items-start gap-4 ring-1 ring-slate-100">
+            <div className="w-10 h-10 bg-green-50 text-green-600 rounded-xl flex items-center justify-center shrink-0">
+              <Bell className="w-6 h-6" />
             </div>
             <div className="flex-1 overflow-hidden">
               <div className="flex justify-between items-center mb-1">
-                <p className="text-[10px] font-black text-red-500 uppercase tracking-widest">Urgent Ticket</p>
+                <p className="text-[10px] font-black text-green-600 uppercase tracking-widest">Status Update</p>
                 <button onClick={() => setToast(null)} className="text-slate-300 hover:text-slate-500 transition-colors">✕</button>
               </div>
-              <p className="text-xs font-black text-slate-800 truncate mb-1">New Message from {toast.user}</p>
-              <p className="text-xs text-slate-500 font-medium line-clamp-2 italic">{toast.msg}</p>
-              <Button
-                size="sm"
-                onClick={() => {
-                  const conv = inbox.find(i => i.userEmail === toast.user);
-                  if (conv) {
-                    setActiveChat({ userEmail: conv.userEmail, serviceId: conv.serviceId, serviceName: conv.serviceName });
-                  }
-                  setToast(null);
-                }}
-                className="mt-3 w-full bg-red-600 hover:bg-red-700 text-white font-bold h-8 text-[10px] rounded-lg"
-              >
-                Open Conversation
-              </Button>
+              <p className="text-xs font-black text-slate-800 mb-1">Notification Sent</p>
+              <p className="text-xs text-slate-600 font-medium line-clamp-2">{toast.msg}</p>
             </div>
           </Card>
         </div>

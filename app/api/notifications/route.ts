@@ -4,15 +4,23 @@ import { getNotifications, markAsRead, clearAll, addNotification } from '@/lib/n
 export async function GET(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
-        const userEmail = searchParams.get('userEmail');
+        let userEmail = searchParams.get('userEmail');
+
+        console.log('[NotificationsAPI] GET - Looking for email:', userEmail);
 
         if (!userEmail) {
             return NextResponse.json({ success: false, error: 'Missing userEmail' }, { status: 400 });
         }
 
+        // Normalize email: trim and lowercase
+        userEmail = userEmail.trim().toLowerCase();
+        
         const notifications = getNotifications(userEmail);
+        console.log('[NotificationsAPI] Found', notifications.length, 'notifications for:', userEmail);
+        
         return NextResponse.json({ success: true, notifications });
     } catch (error) {
+        console.error('[NotificationsAPI] Error:', error);
         return NextResponse.json({ success: false, error: 'Failed to fetch notifications' }, { status: 500 });
     }
 }

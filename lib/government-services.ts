@@ -4,6 +4,13 @@ export interface ServiceField {
   type: 'text' | 'email' | 'tel' | 'number' | 'textarea' | 'file' | 'date';
   voiceLabel?: Record<string, string>; // Multi-language voice prompts
   requiresFile?: boolean; // Mark fields that need file upload
+  validation?: {
+    pattern?: string;
+    message?: Record<string, string>;
+    minLength?: number;
+    maxLength?: number;
+  };
+  options?: Array<{ label: string; value: string }>;
 }
 
 export interface GovernmentService {
@@ -22,7 +29,15 @@ const COMMON_FIELDS: ServiceField[] = [
   },
   {
     id: 'phone', label: 'Phone Number', type: 'tel',
-    voiceLabel: { en: 'What is your phone number?', hi: 'अपना फोन नंबर बताएं', te: 'మీ ఫోన్ నంబర్ చెప్పండి' }
+    voiceLabel: { en: 'What is your phone number?', hi: 'अपना फोन नंबर बताएं', te: 'మీ ఫోన్ నంబర్ చెప్పండి' },
+    validation: {
+      pattern: '^[0-9]{10}$',
+      message: {
+        en: 'Please enter exactly 10 digits for your phone number.',
+        hi: 'कृपया अपने फ़ोन नंबर के लिए ठीक 10 अंक दर्ज करें।',
+        te: 'దయచేసి మీ ఫోన్ నంబర్ కోసం సరిగ్గా 10 అంకెలను నమోదు చేయండి.'
+      }
+    }
   },
 ];
 
@@ -37,7 +52,12 @@ const AADHAAR_UPDATE_FIELDS: ServiceField[] = [
   },
   {
     id: 'gender', label: 'Gender', type: 'text',
-    voiceLabel: { en: 'What is your gender?', hi: 'आपका लिंग क्या है?', te: 'మీ లింగం ఏమిటి?' }
+    voiceLabel: { en: 'What is your gender? Male, Female, or Other?', hi: 'आपका लिंग क्या है? पुरुष, महिला या अन्य?', te: 'మీ లింగం ఏమిటి? పురుషుడు, స్త్రీ లేదా ఇతర?' },
+    options: [
+      { label: 'Male', value: 'male' },
+      { label: 'Female', value: 'female' },
+      { label: 'Other', value: 'other' }
+    ]
   },
   {
     id: 'house_name', label: 'House / Flat / Building Name', type: 'text',
@@ -61,15 +81,51 @@ const AADHAAR_UPDATE_FIELDS: ServiceField[] = [
   },
   {
     id: 'pincode', label: 'PIN Code', type: 'text',
-    voiceLabel: { en: 'What is your PIN code?', hi: 'आपका पिन कोड क्या है?', te: 'మీ పిన్ కోడ్ ఏమిటి?' }
+    voiceLabel: { en: 'What is your PIN code?', hi: 'आपका पिन कोड क्या है?', te: 'మీ పిన్ కోడ్ ఏమిటి?' },
+    validation: {
+      pattern: '^[0-9]{6}$',
+      message: {
+        en: 'Please enter exactly 6 digits for your PIN code.',
+        hi: 'कृपया अपने पिन कोड के लिए ठीक 6 अंक दर्ज करें।',
+        te: 'దయచేసి మీ పిన్ కోడ్ కోసం సరిగ్గా 6 అంకెలను నమోదు చేయండి.'
+      }
+    }
   },
   {
     id: 'mobile', label: 'Mobile Number', type: 'tel',
-    voiceLabel: { en: 'What is your mobile number?', hi: 'अपना मोबाइल नंबर बताएं', te: 'మీ మొబైల్ సంఖ్య చెప్పండి' }
+    voiceLabel: { en: 'What is your mobile number?', hi: 'अपना मोबाइल नंबर बताएं', te: 'మీ మొబైల్ సంఖ్య చెప్పండి' },
+    validation: {
+      pattern: '^[0-9]{10}$',
+      message: {
+        en: 'Please enter exactly 10 digits for your mobile number.',
+        hi: 'कृपया अपने मोबाइल नंबर के लिए ठीक 10 अंक दर्ज करें।',
+        te: 'దయచేసి మీ మొబైల్ సంఖ్య కోసం సరిగ్గా 10 అంకెలను నమోదు చేయండి.'
+      }
+    }
   },
   {
     id: 'email', label: 'Email ID (Optional)', type: 'email',
-    voiceLabel: { en: 'What is your email address? You can say skip if you dont want to provide it.', hi: 'आपका ईमेल पता क्या है? यदि आप नहीं देना चाहते तो छोड़ सकते हैं।', te: 'మీ ఈమెయిల్ అడ్రస్ ఏమిటి? మీకు ఇష్టం లేకపోతే వదిలేయవచ్చు.' }
+    voiceLabel: { en: 'What is your email address? You can say skip if you dont want to provide it.', hi: 'आपका ईमेल पता क्या है? यदि आप नहीं देना चाहते तो छोड़ सकते हैं।', te: 'మీ ఈమెయిల్ అడ్రస్ ఏమిటి? మీకు ఇష్టం లేకపోతే వదిలేయవచ్చు.' },
+    validation: {
+      pattern: '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$',
+      message: {
+        en: 'Please enter a valid email address.',
+        hi: 'कृपया एक वैध ईमेल पता दर्ज करें।',
+        te: 'దయచేసి సరైన ఈమెయిల్ అడ్రస్‌ను నమోదు చేయండి.'
+      }
+    }
+  },
+  {
+    id: 'aadhaar_no', label: 'Aadhaar Number', type: 'text',
+    voiceLabel: { en: 'Please tell me your 12 digit Aadhaar number', hi: 'कृपया अपना 12 अंकों का आधार नंबर बताएं', te: 'దయచేసి మీ 12 అంకెల ఆధార్ సంఖ్యను చెప్పండి' },
+    validation: {
+      pattern: '^[0-9]{12}$',
+      message: {
+        en: 'Please enter exactly 12 digits for Aadhaar number.',
+        hi: 'कृपया आधार नंबर के लिए ठीक 12 अंक दर्ज करें।',
+        te: 'దయచేసి ఆధార్ సంఖ్య కోసం సరిగ్గా 12 అంకెలను నమోదు చేయండి.'
+      }
+    }
   },
   {
     id: 'doc_type', label: 'Document Proof (Upload File)', type: 'file',

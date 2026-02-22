@@ -15,14 +15,15 @@ import {
     UserCircle,
     Bell,
     AlertTriangle,
-    ShieldCheck
+    ShieldCheck,
+    Languages
 } from 'lucide-react';
 import { getAllActiveSubmissions } from '@/lib/qr-utils';
 import type { SubmittedService } from '@/lib/government-services';
 import { GOVERNMENT_SERVICES, getTranslatedService } from '@/lib/government-services';
 import { MessageCenter } from '@/components/message-center';
 import { translations } from '@/lib/translations';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage, AVAILABLE_LANGUAGES } from '@/contexts/LanguageContext';
 
 interface UserProfileDropdownProps {
     userEmail: string;
@@ -40,7 +41,7 @@ export const UserProfileDropdown = ({
     language
 }: UserProfileDropdownProps) => {
     const router = useRouter();
-    const { selectedLanguage } = useLanguage();
+    const { selectedLanguage, setSelectedLanguage } = useLanguage();
     const langCode = selectedLanguage?.code.split('-')[0] || 'en';
     const t = translations[langCode] || translations['en'];
     const [isOpen, setIsOpen] = useState(false);
@@ -48,6 +49,7 @@ export const UserProfileDropdown = ({
     const [showForms, setShowForms] = useState(false);
     const [showMessages, setShowMessages] = useState(false);
     const [showNotifications, setShowNotifications] = useState(false);
+    const [showLanguages, setShowLanguages] = useState(false);
     const [activeChatService, setActiveChatService] = useState<{ id: number; name: string } | null>(null);
     const [unreadCount, setUnreadCount] = useState(0);
     const [allMessages, setAllMessages] = useState<any[]>([]);
@@ -59,8 +61,12 @@ export const UserProfileDropdown = ({
 
         const fetchUserData = async () => {
             try {
+                // Normalize email for consistent matching
+                const normalizedEmail = userEmail.trim().toLowerCase();
+                console.log('[UserProfileDropdown] Fetching data for email:', normalizedEmail);
+                
                 // Fetch unread messages
-                const msgRes = await fetch(`/api/messages?userEmail=${userEmail}`, {
+                const msgRes = await fetch(`/api/messages?userEmail=${encodeURIComponent(normalizedEmail)}`, {
                     signal: controller.signal
                 });
                 if (!isMounted) return;
@@ -72,11 +78,17 @@ export const UserProfileDropdown = ({
                 }
 
                 // Fetch notifications
-                const notifRes = await fetch(`/api/notifications?userEmail=${userEmail}`, {
+                const notifRes = await fetch(`/api/notifications?userEmail=${encodeURIComponent(normalizedEmail)}`, {
                     signal: controller.signal
                 });
                 if (!isMounted) return;
                 const notifData = await notifRes.json();
+                console.log('[UserProfileDropdown] Notifications fetched:', {
+                    userEmail: normalizedEmail,
+                    count: notifData.notifications?.length || 0,
+                    success: notifData.success,
+                    notifications: notifData.notifications
+                });
                 if (notifData.success) {
                     setNotifications(notifData.notifications);
                 }
@@ -169,7 +181,7 @@ export const UserProfileDropdown = ({
 
             {isOpen && (
                 <>
-                    <div className="fixed inset-0 z-40" onClick={() => { setIsOpen(false); setShowForms(false); setShowMessages(false); }} />
+                    <div className="fixed inset-0 z-40" onClick={() => { setIsOpen(false); setShowForms(false); setShowMessages(false); setShowNotifications(false); setShowLanguages(false); }} />
                     <Card className="absolute right-0 mt-3 w-80 bg-black backdrop-blur-xl border border-neutral-800 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.5)] rounded-3xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
 
                         {/* User Info Header */}
@@ -195,10 +207,56 @@ export const UserProfileDropdown = ({
                                 <span className="text-sm">{t.myAccount}</span>
                             </button>
 
+                            {/* Language Selection */}
+                            <div className="relative">
+                                <button
+                                    onClick={() => { setShowLanguages(!showLanguages); setShowForms(false); setShowMessages(false); setShowNotifications(false); }}
+                                    className={`w-full flex items-center justify-between px-6 py-4 text-white hover:bg-neutral-800 transition-all text-left font-bold group ${showLanguages ? 'bg-neutral-800' : ''}`}
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <Languages className="h-5 w-5 text-cyan-400 group-hover:text-cyan-300 transition-colors" />
+                                        <span className="text-sm">{t.languageSelection || 'Language'}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-lg">{selectedLanguage?.flag || '🇮🇳'}</span>
+                                        <ChevronRight className={`h-4 w-4 text-neutral-500 transition-transform duration-300 ${showLanguages ? 'rotate-90' : ''}`} />
+                                    </div>
+                                </button>
+
+                                {showLanguages && (
+                                    <div className="bg-neutral-900 border-y border-neutral-800 max-h-60 overflow-y-auto custom-scrollbar">
+                                        <div className="py-2 space-y-1">
+                                            {AVAILABLE_LANGUAGES.map((lang) => (
+                                                <button
+                                                    key={lang.code}
+                                                    onClick={() => {
+                                                        setSelectedLanguage(lang);
+                                                        setShowLanguages(false);
+                                                    }}
+                                                    className={`w-full flex items-center justify-between px-6 py-3 transition-all ${
+                                                        selectedLanguage?.code === lang.code
+                                                            ? 'bg-gradient-to-r from-cyan-500/20 to-purple-600/20 text-white border-l-4 border-cyan-400'
+                                                            : 'text-neutral-300 hover:bg-neutral-800 hover:text-white'
+                                                    }`}
+                                                >
+                                                    <div className="flex items-center gap-3">
+                                                        <span className="text-lg">{lang.flag}</span>
+                                                        <span className="text-sm font-bold">{lang.name}</span>
+                                                    </div>
+                                                    {selectedLanguage?.code === lang.code && (
+                                                        <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></div>
+                                                    )}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
                             {/* My Forms */}
                             <div className="relative">
                                 <button
-                                    onClick={() => { setShowForms(!showForms); setShowMessages(false); }}
+                                    onClick={() => { setShowForms(!showForms); setShowMessages(false); setShowNotifications(false); setShowLanguages(false); }}
                                     className={`w-full flex items-center justify-between px-6 py-4 text-white hover:bg-neutral-800 transition-all text-left font-bold group ${showForms ? 'bg-neutral-800' : ''}`}
                                 >
                                     <div className="flex items-center gap-4">
@@ -220,9 +278,10 @@ export const UserProfileDropdown = ({
                                                 {submissions.map((sub) => {
                                                     const serviceDef = GOVERNMENT_SERVICES.find(s => s.id === sub.serviceId);
                                                     const serviceName = serviceDef ? getTranslatedService(serviceDef, langCode).name : sub.serviceName;
+                                                    const isExpired = sub.isExpired || ['ready_for_collection', 'collected', 'rejected'].includes(sub.status || '');
                                                     
                                                     return (
-                                                    <div key={sub.id} className="flex items-center justify-between px-6 py-4 hover:bg-neutral-800 transition-all group">
+                                                    <div key={sub.id} className={`flex items-center justify-between px-6 py-4 transition-all group ${isExpired ? 'bg-neutral-800/50 opacity-75' : 'hover:bg-neutral-800'}`}>
                                                         <button
                                                             onClick={() => {
                                                                 onViewForm(sub);
@@ -230,19 +289,28 @@ export const UserProfileDropdown = ({
                                                             }}
                                                             className="flex-1 text-left"
                                                         >
-                                                            <p className="text-xs font-black text-white truncate group-hover:text-cyan-400 transition-colors uppercase tracking-tight">{serviceName}</p>
-                                                            <p className="text-[10px] text-neutral-400 font-bold tracking-wider">{new Date(sub.submittedAt).toLocaleDateString()}</p>
+                                                            <div className="flex items-center gap-2">
+                                                                <p className={`text-xs font-black truncate uppercase tracking-tight ${isExpired ? 'text-neutral-500 line-through' : 'text-white group-hover:text-cyan-400'} transition-colors`}>{serviceName}</p>
+                                                                {isExpired && (
+                                                                    <span className="px-2 py-0.5 bg-red-500/20 text-red-400 text-[8px] font-black rounded-full whitespace-nowrap">
+                                                                        EXPIRED
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <p className={`text-[10px] font-bold tracking-wider ${isExpired ? 'text-neutral-600' : 'text-neutral-400'}`}>{new Date(sub.submittedAt).toLocaleDateString()}</p>
                                                         </button>
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                setActiveChatService({ id: sub.serviceId, name: sub.serviceName });
-                                                            }}
-                                                            className="p-2.5 text-indigo-400 hover:text-white hover:bg-indigo-600 rounded-xl transition-all shadow-sm"
-                                                            title="Message Admin"
-                                                        >
-                                                            <Mail className="h-4 w-4" />
-                                                        </button>
+                                                        {!isExpired && (
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setActiveChatService({ id: sub.serviceId, name: sub.serviceName });
+                                                                }}
+                                                                className="p-2.5 text-indigo-400 hover:text-white hover:bg-indigo-600 rounded-xl transition-all shadow-sm"
+                                                                title="Message Admin"
+                                                            >
+                                                                <Mail className="h-4 w-4" />
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 );
                                                 })}
@@ -321,7 +389,7 @@ export const UserProfileDropdown = ({
                             {/* Contact  */}
                             <div className="relative">
                                 <button
-                                    onClick={() => { setShowMessages(!showMessages); setShowForms(false); }}
+                                    onClick={() => { setShowMessages(!showMessages); setShowForms(false); setShowNotifications(false); setShowLanguages(false); }}
                                     className={`w-full flex items-center justify-between px-6 py-4 text-white hover:bg-neutral-800 transition-all text-left font-bold group ${showMessages ? 'bg-neutral-800' : ''}`}
                                 >
                                     <div className="flex items-center gap-4">

@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { INDIAN_STATES, State, District } from '@/lib/indian-locations';
 import { MapPin, Search, ChevronRight, ArrowLeft, CheckCircle2, Building2 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { speakText } from '@/lib/voice-utils';
 
 interface LocationSelectorProps {
   serviceName: string;
@@ -20,6 +21,14 @@ export function LocationSelector({ serviceName, onLocationSelected, onCancel }: 
   const [step, setStep] = useState<'state' | 'district'>('state');
   const [selectedState, setSelectedState] = useState<State | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Voice effect when step changes
+  useEffect(() => {
+    const prompt = step === 'state' ? t.selectState : t.selectDistrict;
+    if (prompt) {
+      speakText(prompt, language);
+    }
+  }, [step, language]);
 
   // Translations
   const translations = {
@@ -35,6 +44,9 @@ export function LocationSelector({ serviceName, onLocationSelected, onCancel }: 
       cancel: 'Cancel',
       noResults: 'No results found',
       selectLocation: 'Select your location to continue',
+      selectedStateLabel: 'Selected State:',
+      districtsCount: 'districts',
+      language: 'Language',
     },
     hi: {
       selectState: 'अपना राज्य चुनें',
@@ -48,6 +60,9 @@ export function LocationSelector({ serviceName, onLocationSelected, onCancel }: 
       cancel: 'रद्द करें',
       noResults: 'कोई परिणाम नहीं मिला',
       selectLocation: 'जारी रखने के लिए अपना स्थान चुनें',
+      selectedStateLabel: 'चुना हुआ राज्य:',
+      districtsCount: 'जिले',
+      language: 'भाषा',
     },
     te: {
       selectState: 'మీ రాష్ట్రాన్ని ఎంచుకోండి',
@@ -61,6 +76,153 @@ export function LocationSelector({ serviceName, onLocationSelected, onCancel }: 
       cancel: 'రద్దు చేయండి',
       noResults: 'ఫలితాలు కనుగొనబడలేదు',
       selectLocation: 'కొనసాగించడానికి మీ స్థానాన్ని ఎంచుకోండి',
+      selectedStateLabel: 'ఎంచుకున్న రాష్ట్రం:',
+      districtsCount: 'జిల్లాలు',
+      language: 'భాష',
+    },
+    kn: {
+      selectState: 'ನಿಮ್ಮ ರಾಜ್ಯವನ್ನು ಆಯ್ಕೆ ಮಾಡಿ',
+      selectDistrict: 'ನಿಮ್ಮ ಜಿಲ್ಲೆಯನ್ನು ಆಯ್ಕೆ ಮಾಡಿ',
+      searchState: 'ರಾಜ್ಯವನ್ನು ಹುಡುಕಿ...',
+      searchDistrict: 'ಜಿಲ್ಲೆಯನ್ನು ಹುಡುಕಿ...',
+      statesUnion: 'ರಾಜ್ಯಗಳು ಮತ್ತು ಕೇಂದ್ರಾಡಳಿತ ಪ್ರದೇಶಗಳು',
+      districtsIn: 'ಜಿಲ್ಲೆಗಳು',
+      applying: 'ಅರ್ಜಿ ಸಲ್ಲಿಸಲಾಗುತ್ತಿದೆ',
+      back: 'ಹಿಂದೆ',
+      cancel: 'ರದ್ದುಮಾಡಿ',
+      noResults: 'ಯಾವುದೇ ಫಲಿತಾಂಶಗಳು ಕಂಡುಬಂದಿಲ್ಲ',
+      selectLocation: 'ಮುಂದುವರಿಯಲು ನಿಮ್ಮ ಸ್ಥಳವನ್ನು ಆಯ್ಕೆಮಾಡಿ',
+      selectedStateLabel: 'ಆಯ್ಕೆಮಾಡಿದ ರಾಜ್ಯ:',
+      districtsCount: 'ಜಿಲ್ಲೆಗಳು',
+      language: 'ಭಾಷೆ',
+    },
+    ta: {
+      selectState: 'உங்கள் மாநிலத்தைத் தேர்ந்தெடுக்கவும்',
+      selectDistrict: 'உங்கள் மாவட்டத்தைத் தேர்ந்தெடுக்கவும்',
+      searchState: 'மாநிலத்தைத் தேடுங்கள்...',
+      searchDistrict: 'மாவட்டத்தைத் தேடுங்கள்...',
+      statesUnion: 'மாநிலங்கள் மற்றும் யூனியன் பிரதேசங்கள்',
+      districtsIn: 'மாவட்டங்கள்',
+      applying: 'விண்ணப்பிக்கிறது',
+      back: 'பின்னால்',
+      cancel: 'ரத்து செய்',
+      noResults: 'முடிவுகள் எதுவும் இல்லை',
+      selectLocation: 'தொடர உங்கள் இருப்பிடத்தைத் தேர்ந்தெடுக்கவும்',
+      selectedStateLabel: 'தேர்ந்தெடுக்கப்பட்ட மாநிலம்:',
+      districtsCount: 'மாவட்டங்கள்',
+      language: 'மொழி',
+    },
+    ml: {
+      selectState: 'നിങ്ങളുടെ സംസ്ഥാനം തിരഞ്ഞെടുക്കുക',
+      selectDistrict: 'നിങ്ങളുടെ ജില്ല തിരഞ്ഞെടുക്കുക',
+      searchState: 'സംസ്ഥാനം തിരയുക...',
+      searchDistrict: 'ജില്ല തിരയുക...',
+      statesUnion: 'സംസ്ഥാനങ്ങളും കേന്ദ്രഭരണ പ്രദേശങ്ങളും',
+      districtsIn: 'ജില്ലകൾ',
+      applying: 'അപേക്ഷിക്കുന്നു',
+      back: 'പിന്നിലേക്ക്',
+      cancel: 'റദ്ദാക്കുക',
+      noResults: 'ഫലങ്ങളൊന്നും കണ്ടെത്തിയില്ല',
+      selectLocation: 'തുടരാൻ നിങ്ങളുടെ ലൊക്കേഷൻ തിരഞ്ഞെടുക്കുക',
+      selectedStateLabel: 'തിരഞ്ഞെടുത്ത സംസ്ഥാനം:',
+      districtsCount: 'ജില്ലകൾ',
+      language: 'ഭാഷ',
+    },
+    mr: {
+      selectState: 'आपले राज्य निवडा',
+      selectDistrict: 'आपला जिल्हा निवडा',
+      searchState: 'राज्य शोधा...',
+      searchDistrict: 'जिल्हा शोधा...',
+      statesUnion: 'राज्ये आणि केंद्रशासित प्रदेश',
+      districtsIn: 'जिल्हे',
+      applying: 'अर्ज करत आहे',
+      back: 'मागे',
+      cancel: 'रद्द करा',
+      noResults: 'कोणतेही निकाल सापडले नाहीत',
+      selectLocation: 'पुढे जाण्यासाठी आपले स्थान निवडा',
+      selectedStateLabel: 'निवडलेले राज्य:',
+      districtsCount: 'जिल्हे',
+      language: 'भाषा',
+    },
+    bn: {
+      selectState: 'আপনার রাজ্য নির্বাচন করুন',
+      selectDistrict: 'আপনার জেলা নির্বাচন করুন',
+      searchState: 'রাজ্য খুঁজুন...',
+      searchDistrict: 'জেলা খুঁজুন...',
+      statesUnion: 'রাজ্য ও কেন্দ্রশাসিত অঞ্চল',
+      districtsIn: 'জেলা',
+      applying: 'আবেদন করা হচ্ছে',
+      back: 'পিছনে',
+      cancel: 'বাতিল করুন',
+      noResults: 'কোন ফলাফল পাওয়া যায়নি',
+      selectLocation: 'চালিয়ে যেতে আপনার অবস্থান নির্বাচন করুন',
+      selectedStateLabel: 'নির্বাচিত রাজ্য:',
+      districtsCount: 'জেলা',
+      language: 'ভাষা',
+    },
+    gu: {
+      selectState: 'તમારું રાજ્ય પસંદ કરો',
+      selectDistrict: 'તમારો જિલ્લો પસંદ કરો',
+      searchState: 'રાજ્ય શોધો...',
+      searchDistrict: 'જિલ્લો શોધો...',
+      statesUnion: 'રાજ્યો અને કેન્દ્રશાસિત પ્રદેશો',
+      districtsIn: 'જિલ્લાઓ',
+      applying: 'અરજી કરી રહ્યા છીએ',
+      back: 'પાછળ',
+      cancel: 'રદ કરો',
+      noResults: 'કોઈ પરિણામ મળ્યા નથી',
+      selectLocation: 'આગળ વધવા માટે તમારું સ્થાન પસંદ કરો',
+      selectedStateLabel: 'પસંદ કરેલ રાજ્ય:',
+      districtsCount: 'જિલ્લાઓ',
+      language: 'ભાષા',
+    },
+    or: {
+      selectState: 'ଆପଣଙ୍କ ରାଜ୍ୟ ଚୟନ କରନ୍ତୁ',
+      selectDistrict: 'ଆପଣଙ୍କ ଜିଲ୍ଲା ଚୟନ କରନ୍ତୁ',
+      searchState: 'ରାଜ୍ୟ ଖୋଜନ୍ତୁ...',
+      searchDistrict: 'ଜିଲ୍ଲା ଖୋଜନ୍ତୁ...',
+      statesUnion: 'ରାଜ୍ୟ ଏବଂ କେନ୍ଦ୍ର ଶାସିତ ଅଞ୍ଚଳ',
+      districtsIn: 'ଜିଲ୍ଲା',
+      applying: 'ଆବେଦନ କରୁଛୁ',
+      back: 'ପଛକୁ',
+      cancel: 'ବାତିଲ କରନ୍ତୁ',
+      noResults: 'କୌଣସି ଫଳାଫଳ ମିଳିଲା ନାହିଁ',
+      selectLocation: 'ଆଗକୁ ବଢିବା ପାଇଁ ଆପଣଙ୍କ ସ୍ଥାନ ଚୟନ କରନ୍ତୁ',
+      selectedStateLabel: 'ଚୟନିତ ରାଜ୍ୟ:',
+      districtsCount: 'ଜିଲ୍ଲା',
+      language: 'ଭାଷା',
+    },
+    pa: {
+      selectState: 'ਆਪਣੇ ਰਾਜ ਦੀ ਚੋਣ ਕਰੋ',
+      selectDistrict: 'ਆਪਣੇ ਜ਼ਿਲ੍ਹੇ ਦੀ ਚੋਣ ਕਰੋ',
+      searchState: 'ਰਾਜ ਦੀ ਖੋਜ ਕਰੋ...',
+      searchDistrict: 'ਜ਼ਿਲ੍ਹੇ ਦੀ ਖੋਜ ਕਰੋ...',
+      statesUnion: 'ਰਾਜ ਅਤੇ ਕੇਂਦਰ ਸ਼ਾਸਤ ਪ੍ਰਦੇਸ਼',
+      districtsIn: 'ਜ਼ਿਲ੍ਹੇ',
+      applying: 'ਅਪਲਾਈ ਕਰ ਰਹੇ ਹੋ',
+      back: 'ਪਿੱਛੇ',
+      cancel: 'ਰੱਦ ਕਰੋ',
+      noResults: 'ਕੋਈ ਨਤੀਜਾ ਨਹੀਂ ਮਿਲਿਆ',
+      selectLocation: 'ਜਾਰੀ ਰੱਖਣ ਲਈ ਆਪਣਾ ਸਥਾਨ ਚੁਣੋ',
+      selectedStateLabel: 'ਚੁਣਿਆ ਹੋਇਆ ਰਾਜ:',
+      districtsCount: 'ਜ਼ਿਲ੍ਹੇ',
+      language: 'ਭਾਸ਼ਾ',
+    },
+    ur: {
+      selectState: 'اپنی ریاست منتخب کریں',
+      selectDistrict: 'اپنا ضلع منتخب کریں',
+      searchState: 'ریاست تلاش کریں...',
+      searchDistrict: 'ضلع تلاش کریں...',
+      statesUnion: 'ریاستیں اور مرکز کے زیر انتظام علاقے',
+      districtsIn: 'اضلاع',
+      applying: 'درخواست دے رہے ہیں',
+      back: 'واپس',
+      cancel: 'منسوخ کریں',
+      noResults: 'کوئی نتیجہ نہیں ملا',
+      selectLocation: 'آگے بڑھنے کے لیے اپنا مقام منتخب کریں',
+      selectedStateLabel: 'منتخب ریاست:',
+      districtsCount: 'اضلاع',
+      language: 'زبان',
     }
   };
 
@@ -70,10 +232,11 @@ export function LocationSelector({ serviceName, onLocationSelected, onCancel }: 
   const filteredStates = useMemo(() => {
     if (!searchQuery) return INDIAN_STATES;
     const query = searchQuery.toLowerCase();
-    return INDIAN_STATES.filter(state => 
+    return INDIAN_STATES.filter(state =>
       state.name.toLowerCase().includes(query) ||
-      state.nameHi.includes(searchQuery) ||
-      state.nameTe.includes(searchQuery) ||
+      Object.entries(state).some(([key, value]) =>
+        key.startsWith('name') && typeof value === 'string' && value.includes(searchQuery)
+      ) ||
       state.code.toLowerCase().includes(query)
     );
   }, [searchQuery]);
@@ -83,10 +246,11 @@ export function LocationSelector({ serviceName, onLocationSelected, onCancel }: 
     if (!selectedState) return [];
     if (!searchQuery) return selectedState.districts;
     const query = searchQuery.toLowerCase();
-    return selectedState.districts.filter(district => 
+    return selectedState.districts.filter(district =>
       district.name.toLowerCase().includes(query) ||
-      district.nameHi?.includes(searchQuery) ||
-      district.nameTe?.includes(searchQuery)
+      Object.entries(district).some(([key, value]) =>
+        key.startsWith('name') && typeof value === 'string' && value.includes(searchQuery)
+      )
     );
   }, [selectedState, searchQuery]);
 
@@ -116,6 +280,15 @@ export function LocationSelector({ serviceName, onLocationSelected, onCancel }: 
     switch (language) {
       case 'hi': return state.nameHi || state.name;
       case 'te': return state.nameTe || state.name;
+      case 'kn': return state.nameKn || state.name;
+      case 'ta': return state.nameTa || state.name;
+      case 'ml': return state.nameMl || state.name;
+      case 'mr': return state.nameMr || state.name;
+      case 'bn': return state.nameBn || state.name;
+      case 'gu': return state.nameGu || state.name;
+      case 'or': return state.nameOr || state.name;
+      case 'pa': return state.namePa || state.name;
+      case 'ur': return state.nameUr || state.name;
       default: return state.name;
     }
   };
@@ -124,6 +297,15 @@ export function LocationSelector({ serviceName, onLocationSelected, onCancel }: 
     switch (language) {
       case 'hi': return district.nameHi || district.name;
       case 'te': return district.nameTe || district.name;
+      case 'kn': return district.nameKn || district.name;
+      case 'ta': return district.nameTa || district.name;
+      case 'ml': return district.nameMl || district.name;
+      case 'mr': return district.nameMr || district.name;
+      case 'bn': return district.nameBn || district.name;
+      case 'gu': return district.nameGu || district.name;
+      case 'or': return district.nameOr || district.name;
+      case 'pa': return district.namePa || district.name;
+      case 'ur': return district.nameUr || district.name;
       default: return district.name;
     }
   };
@@ -141,13 +323,27 @@ export function LocationSelector({ serviceName, onLocationSelected, onCancel }: 
             <span className="font-medium">{step === 'state' ? t.cancel : t.back}</span>
           </button>
 
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-12 h-12 bg-gradient-to-br from-cyan-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
-              <MapPin className="w-6 h-6 text-white" />
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-cyan-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
+                <MapPin className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <p className="text-sm bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent font-semibold uppercase tracking-wider">{t.applying}</p>
+                <h1 className="text-2xl font-black text-white">{serviceName}</h1>
+              </div>
             </div>
-            <div>
-              <p className="text-sm bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent font-semibold uppercase tracking-wider">{t.applying}</p>
-              <h1 className="text-2xl font-black text-white">{serviceName}</h1>
+
+            {/* Language Indicator */}
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-xl self-start md:self-center">
+              <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">{t.language}:</span>
+              <span className="text-lg">{selectedLanguage?.flag}</span>
+              <span className="text-sm font-bold text-white">
+                {selectedLanguage?.name}
+                {selectedLanguage?.nativeName && selectedLanguage.nativeName !== selectedLanguage.name && (
+                  <span className="ml-1 text-neutral-400 font-normal">({selectedLanguage.nativeName})</span>
+                )}
+              </span>
             </div>
           </div>
           <p className="text-gray-400 mt-2">{t.selectLocation}</p>
@@ -181,10 +377,19 @@ export function LocationSelector({ serviceName, onLocationSelected, onCancel }: 
         {/* Content */}
         <Card className="bg-black shadow-xl rounded-3xl border border-neutral-800 overflow-hidden">
           <div className="p-6">
-            <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-              <Building2 className="w-5 h-5 text-cyan-400" />
-              {step === 'state' ? t.statesUnion : `${t.districtsIn} ${selectedState ? getStateName(selectedState) : ''}`}
-            </h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                <Building2 className="w-5 h-5 text-cyan-400" />
+                {step === 'state' ? t.statesUnion : `${t.districtsIn} ${selectedState ? getStateName(selectedState) : ''}`}
+              </h2>
+              <div className="flex items-center gap-2 px-3 py-1 bg-white/10 rounded-full border border-white/5">
+                <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-tighter">{t.language}:</span>
+                <span className="text-xs font-bold text-cyan-400 flex items-center gap-1">
+                  <span>{selectedLanguage?.flag}</span>
+                  <span>{selectedLanguage?.nativeName || selectedLanguage?.name}</span>
+                </span>
+              </div>
+            </div>
 
             {step === 'state' ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
@@ -199,10 +404,10 @@ export function LocationSelector({ serviceName, onLocationSelected, onCancel }: 
                     >
                       <div>
                         <p className="font-bold text-white group-hover:text-cyan-400">{getStateName(state)}</p>
-                        {language !== 'en' && (
+                        {language !== 'en' && getStateName(state) !== state.name && (
                           <p className="text-xs text-neutral-500 mt-0.5">{state.name}</p>
                         )}
-                        <p className="text-xs text-neutral-500 mt-1">{state.districts.length} districts</p>
+                        <p className="text-xs text-neutral-500 mt-1">{state.districts.length} {t.districtsCount}</p>
                       </div>
                       <div className="w-8 h-8 bg-neutral-800 group-hover:bg-cyan-500/20 rounded-full flex items-center justify-center">
                         <ChevronRight className="w-4 h-4 text-neutral-500 group-hover:text-cyan-400" />
@@ -224,7 +429,7 @@ export function LocationSelector({ serviceName, onLocationSelected, onCancel }: 
                     >
                       <div>
                         <p className="font-bold text-white group-hover:text-green-400">{getDistrictName(district)}</p>
-                        {language !== 'en' && district.nameHi && (
+                        {language !== 'en' && getDistrictName(district) !== district.name && (
                           <p className="text-xs text-neutral-500 mt-0.5">{district.name}</p>
                         )}
                       </div>
@@ -242,7 +447,7 @@ export function LocationSelector({ serviceName, onLocationSelected, onCancel }: 
         {/* Selected State Badge (in district step) */}
         {step === 'district' && selectedState && (
           <div className="mt-6 flex items-center gap-2 justify-center">
-            <span className="text-sm text-neutral-400">Selected State:</span>
+            <span className="text-sm text-neutral-400">{t.selectedStateLabel}</span>
             <span className="px-3 py-1 bg-cyan-500/20 text-cyan-400 rounded-full font-semibold text-sm">
               {getStateName(selectedState)}
             </span>

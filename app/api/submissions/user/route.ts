@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAllSubmissions, saveDB } from '@/lib/submission-db';
+import { getAllSubmissions, saveDB, reloadDB } from '@/lib/submission-db';
 import { addNotification } from '@/lib/notification-store';
 
 /**
@@ -8,6 +8,9 @@ import { addNotification } from '@/lib/notification-store';
  */
 export async function GET(request: NextRequest) {
     try {
+        // Reload from disk to ensure we have latest data
+        reloadDB();
+
         const { searchParams } = new URL(request.url);
         const email = searchParams.get('email');
 

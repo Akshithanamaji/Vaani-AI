@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAllSubmissions, getServiceSubmissions, STATUS_LABELS } from '@/lib/submission-db';
+import { getAllSubmissions, getServiceSubmissions, STATUS_LABELS, reloadDB } from '@/lib/submission-db';
 
 /**
  * GET /api/submissions/list
@@ -7,6 +7,9 @@ import { getAllSubmissions, getServiceSubmissions, STATUS_LABELS } from '@/lib/s
  */
 export async function GET(request: NextRequest) {
     try {
+        // Reload from disk to ensure we have latest data
+        reloadDB();
+
         const { searchParams } = new URL(request.url);
         const serviceId = searchParams.get('serviceId');
 

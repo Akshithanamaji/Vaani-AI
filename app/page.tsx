@@ -35,10 +35,12 @@ export default function Home() {
       sessionStorage.setItem('language_reset_done', 'true');
     }
     
-    // Check for user session
+    // Check for user session - normalize email
     const storedEmail = localStorage.getItem('vaani_user_email');
     if (storedEmail) {
-      setUserEmail(storedEmail);
+      const normalizedEmail = storedEmail.trim().toLowerCase();
+      setUserEmail(normalizedEmail);
+      localStorage.setItem('vaani_user_email', normalizedEmail);
       setCurrentView('portal');
     }
   }, []);
@@ -63,8 +65,9 @@ export default function Home() {
   };
 
   const handleAuthSuccess = (email: string) => {
-    setUserEmail(email);
-    localStorage.setItem('vaani_user_email', email);
+    const normalizedEmail = email.trim().toLowerCase();
+    setUserEmail(normalizedEmail);
+    localStorage.setItem('vaani_user_email', normalizedEmail);
     setCurrentView('portal');
   };
 
