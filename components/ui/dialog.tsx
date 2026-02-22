@@ -65,6 +65,7 @@ function DialogContent({
         )}
         {...props}
       >
+        <DialogDescription className="sr-only" />
         {children}
         {showCloseButton && (
           <DialogPrimitive.Close

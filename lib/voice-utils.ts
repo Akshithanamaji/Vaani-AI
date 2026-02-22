@@ -737,3 +737,55 @@ export function getFieldDescription(fieldKey: string, language: string): string 
   const lang = (language && typeof language === 'string') ? language.split('-')[0] : 'en'; // Extract language code (e.g., 'en' from 'en-IN')
   return LANGUAGE_DESCRIPTIONS[lang]?.[fieldKey] || LANGUAGE_DESCRIPTIONS['en']?.[fieldKey] || '';
 }
+/**
+ * GROQ WHISPER LARGE V3 TRANSCRIPTION
+ * Fast, accurate speech-to-text using Groq's API
+ */
+export async function transcribeWithGroqWhisper(
+  audioBlob: Blob,
+  language: string = 'hi'
+): Promise<{ success: boolean; text: string; error?: string }> {
+  try {
+    const reader = new FileReader();
+    const audioData = await new Promise<string>((resolve, reject) => {
+      reader.onload = () => {
+        const base64 = (reader.result as string).split(',')[1];
+        resolve(base64);
+      };
+      reader.onerror = () => reject('Failed to read audio');
+      reader.readAsDataURL(audioBlob);
+    });
+
+    const response = await fetch('/api/speech-to-text', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        audio: audioData,
+        mimeType: audioBlob.type || 'audio/wav',
+        language,
+      }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      return {
+        success: false,
+        text: '',
+        error: result.error || 'Transcription failed',
+      };
+    }
+
+    return {
+      success: true,
+      text: result.text,
+    };
+  } catch (error) {
+    console.error('[GroqTranscription] Error:', error);
+    return {
+      success: false,
+      text: '',
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}

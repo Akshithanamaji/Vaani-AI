@@ -43,20 +43,192 @@ interface LandingPageProps {
   selectedLanguage: Language | null;
 }
 
-// Voice instructions in all 12 languages
+// Voice instructions in all 12 languages - Enhanced to guide users
 const voiceInstructions: Record<string, string> = {
-  en: 'Please click on Start Speaking button first and select your language.',
-  hi: 'कृपया पहले स्टार्ट स्पीकिंग बटन पर क्लिक करें और अपनी भाषा चुनें।',
-  te: 'దయచేసి మొదట స్టార్ట్ స్పీకింగ్ బటన్ పై క్లిక్ చేసి మీ భాషను ఎంచుకోండి.',
-  kn: 'ದಯವಿಟ್ಟು ಮೊದಲು ಸ್ಟಾರ್ಟ್ ಸ್ಪೀಕಿಂಗ್ ಬಟನ್ ಮೇಲೆ ಕ್ಲಿಕ್ ಮಾಡಿ ಮತ್ತು ನಿಮ್ಮ ಭಾಷೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ.',
-  ta: 'முதலில் ஸ்டார்ட் ஸ்பீக்கிங் பட்டனை கிளிக் செய்து உங்கள் மொழியை தேர்ந்தெடுக்கவும்.',
-  ml: 'ദയവായി ആദ്യം സ്റ്റാർട്ട് സ്പീക്കിംഗ് ബട്ടണിൽ ക്ലിക്ക് ചെയ്ത് നിങ്ങളുടെ ഭാഷ തിരഞ്ഞെടുക്കുക.',
-  mr: 'कृपया प्रथम स्टार्ट स्पीकिंग बटणावर क्लिक करा आणि आपली भाषा निवडा.',
-  bn: 'অনুগ্রহ করে প্রথমে স্টার্ট স্পিকিং বোতামে ক্লিক করুন এবং আপনার ভাষা নির্বাচন করুন।',
-  gu: 'કૃપા કરીને પહેલા સ્ટાર્ટ સ્પીકિંગ બટન પર ક્લિક કરો અને તમારી ભાષા પસંદ કરો.',
-  or: 'ଦୟାକରି ପ୍ରଥମେ ଷ୍ଟାର୍ଟ ସ୍ପିକିଂ ବଟନ୍ ଉପରେ କ୍ଲିକ୍ କରନ୍ତୁ ଏବଂ ଆପଣଙ୍କ ଭାଷା ବାଛନ୍ତୁ।',
-  pa: 'ਕਿਰਪਾ ਕਰਕੇ ਪਹਿਲਾਂ ਸਟਾਰਟ ਸਪੀਕਿੰਗ ਬਟਨ ਤੇ ਕਲਿੱਕ ਕਰੋ ਅਤੇ ਆਪਣੀ ਭਾਸ਼ਾ ਚੁਣੋ।',
-  ur: 'براہ کرم پہلے سٹارٹ سپیکنگ بٹن پر کلک کریں اور اپنی زبان منتخب کریں۔',
+  en: 'Welcome to Vaani AI. First, please click the Start Speaking button and select your language. Then you can click Get Started to fill your government form.',
+  hi: 'वानी एआई में आपका स्वागत है। पहले स्टार्ट स्पीकिंग बटन पर क्लिक करें और अपनी भाषा चुनें। फिर आप अपना सरकारी फॉर्म भरने के लिए शुरू करें पर क्लिक कर सकते हैं।',
+  te: 'వానీ AI కు స్వాగతం. ముందుగా స్టార్ట్ స్పీకింగ్ బటన్‌ను క్లిక్ చేసి మీ భాషను ఎంచుకోండి. ఆపై మీ ప్రభుత్వ ఫారమ్ పూరించడానికి ప్రారంభించు‌ను క్లిక్ చేయవచ్చు.',
+  kn: 'ವಾಣಿ AI ಗೆ ಸ್ವಾಗತ. ಮೊದಲಿಗೆ ಸ್ಟಾರ್ಟ್ ಸ್ಪೀಕಿಂಗ್ ಬಟನ್ ಕ್ಲಿಕ್ ಮಾಡಿ ಮತ್ತು ನಿಮ್ಮ ಭಾಷೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ. ನಂತರ ನೀವು ನಿಮ್ಮ ಸರ್ಕಾರಿ ಫಾರ್ಮ ಭರ್ತಿ ಮಾಡಲು ಪ್ರಾರಂಭಿಸಿ ಕ್ಲಿಕ್ ಮಾಡಬಹುದು.',
+  ta: 'வாணி AI க்கு வரவேற்கிறோம். முதலில், Start Speaking பட்டனை கிளிக் செய்து உங்கள் மொழியை தேர்ந்தெடுக்கவும். பின்னர் நீங்கள் Get Started ஐ கிளிக் செய்து உங்கள் அரசாங்க படிவத்தை நிரப்பலாம்.',
+  ml: 'വാണി എআইയിലേക്ക് സ്വാഗതം. ആദ്യം, സ്റ്റാർട്ട് സ്പീക്കിംഗ് ബട്ടൻ ക്ലിക്ക് ചെയ്ത് നിങ്ങളുടെ ഭാഷ തിരഞ്ഞെടുക്കുക. തുടർന്ന് നിങ്ങൾ നിങ്ങളുടെ സർക്കാർ ഫോം പൂരിപ്പിക്കാൻ ഗെറ്റ് സ്റ്റാർട്ടഡ് ക്ലിക്ക് ചെയ്യാം.',
+  mr: 'वाणी AI ला स्वागत आहे. प्रथम, स्टार्ट स्पीकिंग बटनवर क्लिक करा आणि आपली भाषा निवडा. मग तुम्ही तुमचा सरकारी फॉर्म भरण्यासाठी सुरू करा वर क्लिक करू शकता.',
+  bn: 'ভানী AI তে স্বাগতম। প্রথমে, স্টার্ট স্পীকিং বোতামে ক্লিক করুন এবং আপনার ভাষা নির্বাচন করুন। তারপর আপনি আপনার সরকারী ফর্ম পূরণ করতে শুরু করুন ক্লিক করতে পারেন।',
+  gu: 'વાણી AI માં આપનું સ્વાગત છે. પહેલા, સ્ટાર્ટ સ્પીકિંગ બટન પર ક્લિક કરો અને તમારી ભાષા પસંદ કરો. પછી તમે તમારો સરકારી ફોર્મ ભરવા માટે શરૂ કરોનું ક્લિક કરી શકો છો.',
+  or: 'ଭାଣୀ AI ରେ ସ୍ବାଗତଥାଏ। ପ୍ରଥମେ, ସ୍ଟାର୍ଟ ସ୍ପିକିଂ ବଟନ୍ ଉପରେ କ୍ଲିକ୍ କରନ୍ତୁ ଏବଂ ଆପଣଙ୍କ ଭାଷା ବାଛନ୍ତୁ। ତାପରେ ଆପଣ ଆପଣଙ୍କ ସରକାରୀ ଫର୍ମ ଭରିବାକୁ ଆରମ୍ଭ କରନ୍ତୁ ଉପରେ କ୍ଲିକ୍ କରିପାରିବେ।',
+  pa: 'ਵਾਣੀ AI ਵਿੱਚ ਸ਼ਾਮਲ ਸਵਾਗਤ। ਪਹਿਲਾਂ, ਸਟਾਰਟ ਸਪੀਕਿੰਗ ਬਟਨ ਤੇ ਕਲਿੱਕ ਕਰੋ ਅਤੇ ਆਪਣੀ ਭਾਸ਼ਾ ਚੁਣੋ। ਫਿਰ ਤੁਸੀਂ ਆਪਣੇ ਸਰਕਾਰੀ ਫਾਰਮ ਨੂੰ ਭਰਨ ਲਈ ਸ਼ੁਰੂ ਕਰੋ ਬਟਨ ਤੇ ਕਲਿੱਕ ਕਰ ਸਕਦੇ ਹੋ।',
+  ur: 'وانی AI میں خوش آمدید۔ پہلے، سٹارٹ سپیکنگ بٹن پر کلک کریں اور اپنی زبان منتخب کریں۔ پھر آپ اپنی سرکاری فارم بھرنے کے لیے شروع کریں پر کلک کر سکتے ہیں۔',
+};
+
+// Language confirmation messages in all 12 languages
+const languageConfirmationMessages: Record<string, Record<string, string>> = {
+  en: {
+    en: 'You have selected English.',
+    hi: 'You have selected Hindi.',
+    te: 'You have selected Telugu.',
+    kn: 'You have selected Kannada.',
+    ta: 'You have selected Tamil.',
+    ml: 'You have selected Malayalam.',
+    mr: 'You have selected Marathi.',
+    bn: 'You have selected Bengali.',
+    gu: 'You have selected Gujarati.',
+    or: 'You have selected Odia.',
+    pa: 'You have selected Punjabi.',
+    ur: 'You have selected Urdu.',
+  },
+  hi: {
+    en: 'आपने अंग्रेजी चुनी है।',
+    hi: 'आपने हिंदी चुनी है।',
+    te: 'आपने तेलुगु चुनी है।',
+    kn: 'आपने कन्नड़ चुनी है।',
+    ta: 'आपने तमिल चुनी है।',
+    ml: 'आपने मलयालम चुनी है।',
+    mr: 'आपने मराठी चुनी है।',
+    bn: 'आपने बंगाली चुनी है।',
+    gu: 'आपने गुजराती चुनी है।',
+    or: 'आपने ओडिया चुनी है।',
+    pa: 'आपने पंजाबी चुनी है।',
+    ur: 'आपने उर्दू चुनी है।',
+  },
+  te: {
+    en: 'మీరు ఆంగ్లభాషను ఎంచుకున్నారు.',
+    hi: 'మీరు హిందీను ఎంచుకున్నారు.',
+    te: 'మీరు తెలుగుని ఎంచుకున్నారు.',
+    kn: 'మీరు కన్నడను ఎంచుకున్నారు.',
+    ta: 'మీరు తమిళ్లను ఎంచుకున్నారు.',
+    ml: 'మీరు మలయాళ్లను ఎంచుకున్నారు.',
+    mr: 'మీరు మరాఠీని ఎంచుకున్నారు.',
+    bn: 'మీరు బెంగాలీని ఎంచుకున్నారు.',
+    gu: 'మీరు గుజరాతీని ఎంచుకున్నారు.',
+    or: 'మీరు ఓడియాని ఎంచుకున్నారు.',
+    pa: 'మీరు పంజాబీని ఎంచుకున్నారు.',
+    ur: 'మీరు ఉర్దూను ఎంచుకున్నారు.',
+  },
+  ta: {
+    en: 'நீங்கள் ஆங்கிலத்தை தேர்ந்தெடுத்தீர்கள்.',
+    hi: 'நீங்கள் இந்தியைத் தேர்ந்தெடுத்தீர்கள்.',
+    te: 'நீங்கள் తెలుగుவைத் தேர்ந்தெடுத்தீர்கள்.',
+    kn: 'நீங்கள் கன্నடத்தை தேர்ந்தெடுத்தீர்கள்.',
+    ta: 'நீங்கள் தமிழத்தை தேர்ந்தெடுத்தீர்கள்.',
+    ml: 'நீங்கள் മലയാളத്தை தேர்ந்தெடுத்தீர்கள்.',
+    mr: 'நீங்கள் मराठीஐ தேர்ந்தெடுத்தீர்கள்.',
+    bn: 'நீங்கள் బెంగാలીஐ தேர்ந்தெடுத்தீர்கள்.',
+    gu: 'நீங்கள் ગુજરાતીஐ தேர்ந்தெடுத்தீர்கள்.',
+    or: 'நீங்கள் ଓଡ଼ିଆஐ தேர்ந்தெடுத்தீர்கள்.',
+    pa: 'நீங்கள் ਪੰਜਾਬੀஐ தேர்ந்தெடுத்தீர்கள்.',
+    ur: 'நீங்கள் اردوஐ தேர்ந்தெடுத்தீர்கள்.',
+  },
+  kn: {
+    en: 'ನೀವು ಇಂಗ್ಲಿಷ್ ಆಯ್ಕೆ ಮಾಡಿದ್ದೀರಿ.',
+    hi: 'ನೀವು ಹಿಂದಿ ಆಯ್ಕೆ ಮಾಡಿದ್ದೀರಿ.',
+    te: 'ನೀವು తెలుగు ಆಯ್ಕೆ ಮಾಡಿದ್ದೀರಿ.',
+    kn: 'ನೀವು ಕನ್ನಡ ಆಯ್ಕೆ ಮಾಡಿದ್ದೀರಿ.',
+    ta: 'ನೀವು ತಮಿಳು ಆಯ್ಕೆ ಮಾಡಿದ್ದೀರಿ.',
+    ml: 'ನೀವು മലയാളം ಆಯ್ಕೆ ಮಾಡಿದ್ದೀರಿ.',
+    mr: 'ನೀವು मराठी ಆಯ್ಕೆ ಮಾಡಿದ್ದೀರಿ.',
+    bn: 'ನೀವು বাঙ্গালি ಆಯ್ಕೆ ಮಾಡಿದ್ದೀರಿ.',
+    gu: 'ನೀವು ગુજરાતી ಆಯ್ಕೆ ಮಾಡಿದ್ದೀರಿ.',
+    or: 'ನೀವು ଓଡ଼ିଆ ಆಯ್ಕೆ ಮಾಡಿದ್ದೀರಿ.',
+    pa: 'ನೀವು ਪੰਜਾਬੀ ಆಯ್ಕೆ ಮಾಡಿದ್ದೀರಿ.',
+    ur: 'ನೀವು اردو ಆಯ್ಕೆ ಮಾಡಿದ್ದೀರಿ.',
+  },
+  ml: {
+    en: 'നിങ്ങൾ ഇംഗ്ലീഷ് തിരഞ്ഞെടുത്തു.',
+    hi: 'നിങ്ങൾ ഹിന്ദി തിരഞ്ഞെടുത്തു.',
+    te: 'നിങ്ങൾ തെലുഗു തിരഞ്ഞെടുത്തു.',
+    kn: 'നിങ്ങൾ കന്നഡ തിരഞ്ഞെടുത്തു.',
+    ta: 'നിങ്ങൾ തമിഴ് തിരഞ്ഞെടുത്തു.',
+    ml: 'നിങ്ങൾ മലയാളം തിരഞ്ഞെടുത്തു.',
+    mr: 'നിങ്ങൾ മരാഠി തിരഞ്ഞെടുത്തു.',
+    bn: 'നിങ്ങൾ ബംഗാളി തിരഞ്ഞെടുത്തു.',
+    gu: 'നിങ്ങൾ ഗുജറാതി തിരഞ്ഞെടുത്തു.',
+    or: 'നിങ്ങൾ ഒഡിയ തിരഞ്ഞെടുത്തു.',
+    pa: 'നിങ്ങൾ പഞ്ജാബി തിരഞ്ഞെടുത്തു.',
+    ur: 'നിങ്ങൾ ഉർദു തിരഞ്ഞെടുത്തു.',
+  },
+  mr: {
+    en: 'आपने इंग्रजी निवडली आहे.',
+    hi: 'आपने हिंदी निवडली आहे.',
+    te: 'आपने తెలుగు निवडली आहे.',
+    kn: 'आपने कन्नड़ निवडली आहे.',
+    ta: 'आपने तमिल निवडली आहे.',
+    ml: 'आपने मलयालम निवडली आहे.',
+    mr: 'आपने मराठी निवडली आहे.',
+    bn: 'आपने बंगाली निवडली आहे.',
+    gu: 'आपने गुजराती निवडली आहे.',
+    or: 'आपने ओड़िया निवडली आहे.',
+    pa: 'आपने पंजाबी निवडली आहे.',
+    ur: 'आपने उर्दू निवडली आहे.',
+  },
+  bn: {
+    en: 'আপনি ইংরেজি নির্বাচন করেছেন।',
+    hi: 'আপনি হিন্দি নির্বাচন করেছেন।',
+    te: 'আপনি తెలుగు নির্বাচন করেছেন।',
+    kn: 'আপনি ಕನ್ನಡ নির্বাচন করেছেন।',
+    ta: 'আপনি தமிழ் নির্বাচন করেছেন।',
+    ml: 'আপনি മലയാളം নির্বাচন করেছেন।',
+    mr: 'আপনি मराठी নির্বাচন করেছেন।',
+    bn: 'আপনি বাংলা নির্বाচন করেছেন।',
+    gu: 'আপনি ગુજરાતી নির্বাচন করেছেন।',
+    or: 'আপনি ଓଡ଼ିଆ নির্বাচন করেছেন।',
+    pa: 'আপনি ਪੰਜਾਬੀ নির্বাচন করেছেন।',
+    ur: 'আপনি اردو নির্বाচন করেছেন।',
+  },
+  gu: {
+    en: 'તમે અંગ્રેજી પસંદ કરી છે.',
+    hi: 'તમે હિંદી પસંદ કરી છે.',
+    te: 'તમે తెలుగు પસંદ કરી છે.',
+    kn: 'તમે ಕನ್ನಡ પસંદ કરી છે.',
+    ta: 'તમે தமிழ் પસંદ કરી છે.',
+    ml: 'તમે മലയാളം પસંદ કરી છે.',
+    mr: 'તમે मराठी પસંદ કરી છે.',
+    bn: 'તમે বাংলা પસંદ કરી છે.',
+    gu: 'તમે ગુજરાતી પસંદ કરી છે.',
+    or: 'તમે ଓଡ଼ିଆ પસંદ કરી છે.',
+    pa: 'તમે ਪੰਜਾਬੀ પસંદ કરી છે.',
+    ur: 'તમે اردو પસંદ કરી છે.',
+  },
+  or: {
+    en: 'ଆପଣ ଇଂରେଜୀ ବାଛିଛନ୍ତି।',
+    hi: 'ଆପଣ ହିଂଦୀ ବାଛିଛନ୍ତି।',
+    te: 'ଆପଣ తెలుగు ବାଛିଛନ୍ତି।',
+    kn: 'ଆପଣ ಕನ್ನಡ ବାଛିଛନ୍ତି।',
+    ta: 'ଆପଣ தமிழ் ବାଛିଛନ୍ତି।',
+    ml: 'ଆପଣ മലയാളം ବାଛିଛନ୍ତି।',
+    mr: 'ଆପଣ मराठी ବାଛିଛନ୍ତି।',
+    bn: 'ଆପଣ বাংলা ବାଛିଛନ୍ତି।',
+    gu: 'ଆପଣ ગુજરાતી ବାଛିଛନ୍ତି।',
+    or: 'ଆପଣ ଓଡ଼ିଆ ବାଛିଛନ୍ତି।',
+    pa: 'ଆପଣ ਪੰਜਾਬੀ ବାଛିଛନ୍ତି।',
+    ur: 'ଆପଣ اردو ବାଛିଛନ୍ତି।',
+  },
+  pa: {
+    en: 'ਤੁਸੀਂ ਅੰਗਰੇਜ਼ੀ ਚੁਣੀ ਹੈ।',
+    hi: 'ਤੁਸੀਂ ਹਿੰਦੀ ਚੁਣੀ ਹੈ।',
+    te: 'ਤੁਸੀਂ తెలుగు ਚੁਣੀ ਹੈ।',
+    kn: 'ਤੁਸੀਂ ಕನ್ನಡ ਚੁਣੀ ਹੈ।',
+    ta: 'ਤੁਸੀਂ தமிழ் ਚੁਣੀ ਹੈ।',
+    ml: 'ਤੁਸੀਂ മലയാളം ਚੁਣੀ ਹੈ।',
+    mr: 'ਤੁਸੀਂ मराठी ਚੁਣੀ ਹੈ।',
+    bn: 'ਤੁਸੀਂ বাংলা ਚੁਣੀ ਹੈ।',
+    gu: 'ਤੁਸੀਂ ગુજરાતી ਚੁਣੀ ਹੈ।',
+    or: 'ਤੁਸੀਂ ଓଡ଼ିଆ ਚੁਣੀ ਹੈ।',
+    pa: 'ਤੁਸੀਂ ਪੰਜਾਬੀ ਚੁਣੀ ਹੈ।',
+    ur: 'ਤੁਸੀਂ اردو ਚੁਣੀ ਹੈ।',
+  },
+  ur: {
+    en: 'آپ نے انگریزی منتخب کی ہے۔',
+    hi: 'آپ نے ہندی منتخب کی ہے۔',
+    te: 'آپ نے تیلگو منتخب کی ہے۔',
+    kn: 'آپ نے کنڑ منتخب کی ہے۔',
+    ta: 'آپ نے تمل منتخب کی ہے۔',
+    ml: 'آپ نے مالابار منتخب کی ہے۔',
+    mr: 'آپ نے مراٹھی منتخب کی ہے۔',
+    bn: 'آپ نے بنگالی منتخب کی ہے۔',
+    gu: 'آپ نے گجراتی منتخب کی ہے۔',
+    or: 'آپ نے اوڑیا منتخب کی ہے۔',
+    pa: 'آپ نے پنجابی منتخب کی ہے۔',
+    ur: 'آپ نے اردو منتخب کی ہے۔',
+  },
 };
 
 const landingLabels = {
@@ -73,6 +245,32 @@ const landingLabels = {
     howItWorks: 'How It Works',
     readyStarted: 'Ready to Get Started?',
     startNow: 'Get Started Now',
+    noTyping: 'No typing. No literacy barriers. No agents.',
+    languages: 'Languages',
+    qrValidity: 'QR Validity',
+    // Why Vaani AI cards
+    voiceFirstTitle: 'Voice-First Interface',
+    voiceFirstDesc: 'Speak in Hindi, Telugu, Tamil, Bengali, or English. No typing required.',
+    multiLangTitle: 'Multi-Language Support',
+    multiLangDesc: 'Support for 5+ Indian languages with accurate speech recognition.',
+    secureTitle: 'Secure & Private',
+    secureDesc: 'End-to-end encryption. Data deleted after 24 hours automatically.',
+    qrTitle: 'Instant QR Generation',
+    qrDesc: 'Get your unique QR code instantly. Officers can scan and print.',
+    noMiddleTitle: 'No Middlemen',
+    noMiddleDesc: 'Direct access. No agents, no fees, no exploitation.',
+    easyTitle: 'Easy for Everyone',
+    easyDesc: 'Designed for rural, elderly, and low-literacy citizens.',
+    // How It Works
+    stepsSubtitle: 'Three simple steps to fill your government form',
+    step1Title: 'Speak Your Details',
+    step1Desc: 'Choose your language and speak your information naturally. Our AI understands your voice.',
+    step2Title: 'Review & Confirm',
+    step2Desc: 'Check the auto-filled form. Make any corrections if needed.',
+    step3Title: 'Get QR Code',
+    step3Desc: 'Receive a unique QR code. Show it to the officer to print your form instantly.',
+    // CTA Section
+    ctaText: 'Join thousands of citizens using Vaani Ai for hassle-free government services',
   },
   hi: {
     title: 'वॉयस-पावर्ड सरकारी फॉर्म',
@@ -87,6 +285,29 @@ const landingLabels = {
     howItWorks: 'यह कैसे काम करता है',
     readyStarted: 'शुरू करने के लिए तैयार हैं?',
     startNow: 'अभी शुरू करें',
+    noTyping: 'कोई टाइपिंग नहीं। कोई साक्षरता बाधा नहीं। कोई एजेंट नहीं।',
+    languages: 'भाषाएँ',
+    qrValidity: 'QR वैधता',
+    voiceFirstTitle: 'वॉयस-प्रथम इंटरफेस',
+    voiceFirstDesc: 'हिंदी, तेलुगु, तमिल, बंगाली या अंग्रेजी में बोलें। कोई टाइपिंग की आवश्यकता नहीं।',
+    multiLangTitle: 'बहुभाषी समर्थन',
+    multiLangDesc: 'सटीक भाषण पहचान के साथ 5+ भारतीय भाषाओं का समर्थन।',
+    secureTitle: 'सुरक्षित और निजी',
+    secureDesc: 'एंड-टू-एंड एन्क्रिप्शन। डेटा 24 घंटे के बाद स्वचालित रूप से हटाया जाता है।',
+    qrTitle: 'तत्काल QR कोड जनरेशन',
+    qrDesc: 'तुरंत अपना अद्वितीय QR कोड प्राप्त करें। अधिकारियों को स्कैन और प्रिंट कर सकते हैं।',
+    noMiddleTitle: 'कोई बिचौलिया नहीं',
+    noMiddleDesc: 'प्रत्यक्ष पहुंच। कोई एजेंट नहीं, कोई शुल्क नहीं, कोई शोषण नहीं।',
+    easyTitle: 'सभी के लिए आसान',
+    easyDesc: 'ग्रामीण, बुजुर्ग और कम साक्षरता वाले नागरिकों के लिए डिजाइन किया गया।',
+    stepsSubtitle: 'अपने सरकारी फॉर्म को भरने के लिए तीन सरल कदम',
+    step1Title: 'अपने विवरण बोलें',
+    step1Desc: 'अपनी भाषा चुनें और स्वाभाविक रूप से अपनी जानकारी बोलें। हमारा AI आपकी आवाज को समझता है।',
+    step2Title: 'समीक्षा और पुष्टि करें',
+    step2Desc: 'स्वत:भरे गए फॉर्म की जांच करें। यदि आवश्यक हो तो कोई सुधार करें।',
+    step3Title: 'QR कोड प्राप्त करें',
+    step3Desc: 'एक अद्वितीय QR कोड प्राप्त करें। अधिकारी को तुरंत फॉर्म प्रिंट करने के लिए दिखाएं।',
+    ctaText: 'Vaani Ai का उपयोग करके हजारों नागरिकों से जुड़ें परेशानी मुक्त सरकारी सेवाओं के लिए',
   },
   te: {
     title: 'వాయిస్-ఆధారిత ప్రభుత్వ ఫారమ్‌లు',
@@ -101,6 +322,29 @@ const landingLabels = {
     howItWorks: 'ఇది ఎలా కార్యం చేస్తుంది',
     readyStarted: 'ప్రారంభం చేయడానికి సిద్ధమైనారా?',
     startNow: 'ఇప్పుడు ప్రారంభించండి',
+    noTyping: 'టైపింగ్ లేదు. సాక్ష్యరత అవరోధాలు లేవు. ఏజెంట్లు లేరు.',
+    languages: 'భాషలు',
+    qrValidity: 'QR చెల్లుబాటు',
+    voiceFirstTitle: 'వాయిస్-ప్రధమ ఇంటర్ఫేస్',
+    voiceFirstDesc: 'హిందీ, తెలుగు, తమిళ్లు, బెంగాలీ లేదా ఇంగ్లీష్‌లో మాట్లాడండి. టైపింగ్ అవసరం లేదు.',
+    multiLangTitle: 'బహుభాష సపోర్ట్',
+    multiLangDesc: 'ఖచ్చితమైన ఆ音音 గుర్తింపుతో 5+ భారతీయ భాషలకు సపోర్ట్.',
+    secureTitle: 'సురక్షితమైన & ఖాసగీ',
+    secureDesc: 'ఎండ్-టు-ఎండ్ ఎన్‌క్రిప్షన్. 24 గంటల తర్వాత డేటా స్వయంచాలకంగా తొలగించబడుతుంది.',
+    qrTitle: 'తక్షణ QR కోడ్ జనరేషన్',
+    qrDesc: 'మీ ప్రత్యేక QR కోడ్‌ను తక్షణమే పొందండి. అధికారులు స్కాన్ మరియు ప్రింట్ చేయవచ్చు.',
+    noMiddleTitle: 'మధ్యస్థులు లేరు',
+    noMiddleDesc: 'ప్రత్యక్ష ప్రాప్యత. ఏజెంట్లు లేరు, ఫీసు లేరు, దోపిడీ లేదు.',
+    easyTitle: 'సిద్ధులకు సులభం',
+    easyDesc: 'గ్రామీణ, వృద్ధ మరియు తక్కువ సాక్ష్యరత ఉన్న పట్టణ నివాసుల కోసం రూపొందించబడింది.',
+    stepsSubtitle: 'మీ ప్రభుత్వ ఫారమ్ భరించడానికి మూడు సరళ దశలు',
+    step1Title: 'మీ వివరాలను మాట్లాడండి',
+    step1Desc: 'మీ భాషను ఎంచుకుని, ప్రకృతిలో మీ సమాచారం మాట్లాడండి. మా AI మీ వాయిస్‌ను అర్థం చేస్కుంటుంది.',
+    step2Title: 'సమీక్ష మరియు నిర్ధారణ',
+    step2Desc: 'స్వయంచాలక-నిండిన ఫారమ్‌ను తనిఖీ చేయండి. అవసరమైతే ఏవైనా సవరణలు చేయండి.',
+    step3Title: 'QR కోడ్ పొందండి',
+    step3Desc: 'ఒక ప్రత్యేక QR కోడ్ పొందండి. అధికారికి తక్షణమే ఫారమ్ ప్రింట్ చేయమని చూపండి.',
+    ctaText: 'Vaani Ai ఉపయోగించి సుళువైన ప్రభుత్వ సేవల కోసం వేల మంది నాగరికుల కూడా చేరండి',
   },
   kn: {
     title: 'ವಾಯಿಸ್-ಆಧಾರಿತ ಸರ್ಕಾರಿ ಫಾರ್ಮ್‌ಗಳು',
@@ -115,6 +359,29 @@ const landingLabels = {
     howItWorks: 'ಇದು ಹೇಗೆ ಕೆಲಸ ಮಾಡುತ್ತದೆ',
     readyStarted: 'ಶುರು ಮಾಡಲು ಸಿದ್ಧರಾಗಿದ್ದೀರಿ?',
     startNow: 'ಈಗ ಶೂರು ಮಾಡಿ',
+    noTyping: 'ನೀವು ಗುರುತಿಸುವುದೇ ಇಲ್ಲ. ಸಾಕ್ಷರತೆ ಅವರೋಧಗಳು ಇಲ್ಲ. ವಿನಿಯೋಗಿಗಳು ಇಲ್ಲ.',
+    languages: 'ಭಾಷೆಗಳು',
+    qrValidity: 'QR ಪ್ರಮಾಣಿಕತೆ',
+    voiceFirstTitle: 'ವಾಯಿಸ್-ಪ್ರಥಮ ಇಂಟರ್ಫೇಸ್',
+    voiceFirstDesc: 'ಹಿಂದಿ, ತೆಲುಗು, ತಮಿಳು, ಬೆಂಗಾಲಿ ಅಥವಾ ಇಂಗ್ಲಿಷ್‌ನಲ್ಲಿ ಮಾತನಾಡಿ. ಯಾವುದೇ ಟೈಪಿಂಗ್ ಅಗತ್ಯವಿಲ್ಲ.',
+    multiLangTitle: 'ಬಹುಭಾಷಾ ಬೆಂಬಲ',
+    multiLangDesc: 'ನಿಖುರ ಭಾಷಣ ಸ್ವೀಕೃತಿಯೊಂದಿಗೆ 5+ ಭಾರತೀಯ ಭಾಷೆಗಳಿಗೆ ಬೆಂಬಲ.',
+    secureTitle: 'ಸುರಕ್ಷಿತ ಮತ್ತು ಖಾಸಗಿ',
+    secureDesc: 'ಎಂದ್-ಟು-ಎಂದ್ ಎನ್‌ಕ್ರಿಪ್ಷನ್. ಡೇಟಾವನ್ನು 24 ಗಂಟೆಗಳ ನಂತರ ಸ್ವಯಂಚಾಲಿತವಾಗಿ ಅಳಿಸಲಾಗುತ್ತದೆ.',
+    qrTitle: 'ತಕ್ಷಣ QR ಕೋಡ್ ಜನರೇಶನ್',
+    qrDesc: 'ನೀವರ ಅನನ್ಯ QR ಕೋಡ್ ತಕ್ಷಣವೇ ಪಡೆಯಿರಿ. ಅಧಿಕಾರಿಗಳು ಸ್ಕ್ಯಾನ್ ಮತ್ತು ಪ್ರಿಂಟ್ ಮಾಡಬಹುದು.',
+    noMiddleTitle: 'ಯಾವುದೇ ಮಧ್ಯವರ್ತಿ ಇಲ್ಲ',
+    noMiddleDesc: 'ನೇರ ಪ್ರವೇಶ. ಕೋನೇ ಏಜೆಂಟ್‌ಗಳು, ಫೀಸುಗಳು ಅಥವಾ ಶೋಷಣೆ ಇಲ್ಲ.',
+    easyTitle: 'ಎಲ್ಲರಿಗೆ ಸುಲಭ',
+    easyDesc: 'ಗ್ರಾಮೀಣ, ವಯಸ್ಕ ಮತ್ತು ಕಡಿಮೆ ಸಾಕ್ಷರತಾ ನಾಗರಿಕರಿಗೆ ವಿನ್ಯಾಸಗೊಳಿಸಲಾಗಿದೆ.',
+    stepsSubtitle: 'ನಿಮ್ಮ ಸರ್ಕಾರಿ ಫಾರ್ಮ್ ತುಂಬಲು ಮೂರು ಸರಳ ಹಂತಗಳು',
+    step1Title: 'ನಿಮ್ಮ ವಿವರಗಳು ಮಾತನಾಡಿ',
+    step1Desc: 'ನಿಮ್ಮ ಭಾಷೆ ಆರಿಸಿ ಮತ್ತು ನೈಸರ್ಗಿಕವಾಗಿ ನಿಮ್ಮ ಮಾಹಿತಿ ಮಾತನಾಡಿ. ನಮ್ಮ AI ನಿಮ್ಮ ಧ್ವನಿ ತಿಳುವಳಿಕೆ ಹೊಂದಿದೆ.',
+    step2Title: 'ಪರಿಶೀಲನ ಮತ್ತು ದೃಢೀಕರಣ',
+    step2Desc: 'ಸ್ವಯಂ-ಭೂಮೆ ಮಾಡಿದ ಫಾರ್ಮ್ ಪರಿಶೀಲಿಸಿ. ಅವಶ್ಯಕತೆ ಇದ್ದರೆ ಯಾವುದೇ ತಿದ್ದುಪಡಿಗಳನ್ನು ಮಾಡಿ.',
+    step3Title: 'QR ಕೋಡ್ ಪಡೆಯಿರಿ',
+    step3Desc: 'ಒಂದು ಅನನ್ಯ QR ಕೋಡ್ ಸ್ವೀಕರಿಸಿ. ಆಫಿಸರಿಗೆ ಫಾರ್ಮ್ ತಕ್ಷಣವೇ ಪ್ರಿಂಟ್ ಮಾಡಲು ತೋರಿಸಿ.',
+    ctaText: 'Vaani Ai ಬಳಸಿ ತೊಂದರೆ-ಮುಕ್ತ ಸರ್ಕಾರಿ ಸೇವೆಗಳಿಗೆ ಸಾವಿರ ಜನ ನಾಗರಿಕರಲ್ಲಿ ಸೇರಿಕೊಳ್ಳಿ',
   },
   ta: {
     title: 'குரல் சக்தியால் கட்டப்பட்ட அரசாங்க ஆவணங்கள்',
@@ -129,6 +396,29 @@ const landingLabels = {
     howItWorks: 'இது எவ்வாறு செயல்படுகிறது',
     readyStarted: 'தொடங்க தயாரா?',
     startNow: 'இப்போது தொடங்கவும்',
+    noTyping: 'எந்த டைபிங் இல்லை. எந்த சாக்ஷரத தடைகள் இல்லை. எந்த முகவர்கள் இல்லை.',
+    languages: 'மொழிகள்',
+    qrValidity: 'QR செல்லுபடி',
+    voiceFirstTitle: 'குரல்-முதல் இடைமுகம்',
+    voiceFirstDesc: 'தமிழ், தெலுங்கு, தமிழ், வங்காளம் அல்லது ஆங்கிலத்தில் பேசுங்கள். எந்த டைபிங் தேவையில்லை.',
+    multiLangTitle: 'பல மொழி ஆதரவு',
+    multiLangDesc: 'துல்லியமான பேச்சு அங்கீகாரத்துடன் 5+ இந்திய மொழிகளுக்கு ஆதரவு.',
+    secureTitle: 'பாதுகாப்பான & தனிப்பட்ட',
+    secureDesc: '24 மணிநேரம் கழித்து தரவு தானாகவே நீக்கப்படுகிறது.',
+    qrTitle: 'உடனடி QR குறியீடு உৎபादனம்',
+    qrDesc: 'உங்கள் தனிய QR குறியீட்டை உடனடியாக பெறுங்கள். அதிகாரிகள் நக்ஷ்ட்ர மற்றும் அச்சிட முடியும்.',
+    noMiddleTitle: 'எந்த இடைநிலை இல்லை',
+    noMiddleDesc: 'நேரடி அணுகல். கோனு முகவர்கள் இல்லை, கட்டணங்கள் இல்லை, சுரண்டல் இல்லை.',
+    easyTitle: 'அனைவருக்கும் எளிமையான',
+    easyDesc: 'கிராமக் பகுதி, வயஸ்கர மற்றும் குறைந்த சாக்ஷரத குடிமக்களுக்கு வடிவமைக்கப்பட்டுள்ளது.',
+    stepsSubtitle: 'உங்கள் அரசாங்க படிவத்தை நிரப்ப மூன்று எளிய படிகள்',
+    step1Title: 'உங்கள் விவரங்களை பேசுங்கள்',
+    step1Desc: 'உங்கள் மொழியைத் தேர்ந்தெடுத்து, இயற்கையாகவே உங்கள் தகவல்களை பேசுங்கள். எங்கள் AI உங்கள் குரலைப் புரிந்துகொள்கிறது.',
+    step2Title: 'மறுபரிசீலனை மற்றும் உறுதிப்படுத்தல்',
+    step2Desc: 'தானாகவே நிரப்பப்பட்ட படிவத்தை பரிசீலிக்கவும். தேவைப்பட்டால் ஏதேனும் திருத்தங்கள் செய்யவும்.',
+    step3Title: 'QR குறியீட்டைப் பெறுங்கள்',
+    step3Desc: 'ஒரு தனிய QR குறியீட்டைப் பெறுங்கள். அதிகாரிக உடனடியாக அச்சிட வெளிப்படுத்துங்கள்.',
+    ctaText: 'Vaani Ai ஐ பயன்படுத்தி சிரமம் இல்லாத அரசாங்க பணிகளுக்கு ஆயிரம் பேரை விட பல குடிமக்களுடன் சேரவும்',
   },
   ml: {
     title: 'കണ്ഠസ്വര ആധാരിത സരകാരി ഫോമുകൾ',
@@ -143,6 +433,29 @@ const landingLabels = {
     howItWorks: 'ഇത് എങ്ങനെ സംരംഭിക്കുന്നു',
     readyStarted: 'ആരംഭിക്കാൻ പ്രസ്തുത?',
     startNow: 'ഇപ്പോൾ ആരംഭിക്കുക',
+    noTyping: 'ടൈപ്പിംഗൊന്നുമില്ല. സാക്ഷരത തടസ്സങ്ങളൊന്നുമില്ല. ഏജന്റുമാരൊന്നുമില്ല.',
+    languages: 'ഭാഷകൾ',
+    qrValidity: 'QR സാധുത',
+    voiceFirstTitle: 'കണ്ഠസ്വര-ആദ്യ ഇന്റർഫേസ്',
+    voiceFirstDesc: 'മലയാളം, തെലുങ്ക്, തമിഴ്, ബംഗാളി അല്ലെങ്കിൽ ഇംഗ്ലീഷ് സംസാരിക്കുക. ടൈപ്പിംഗ് ആവശ്യമില്ല.',
+    multiLangTitle: 'ബഹുഭാഷാ സഹായം',
+    multiLangDesc: 'കൃത്യമായ സ്പീച്ച് റെക്കഗ്നിഷനിനൊപ്പം 5+ ഇന്ത്യൻ ഭാഷകൾക്കുള്ള സഹായം.',
+    secureTitle: 'സുരക്ഷിതവും സ്വകാര്യവും',
+    secureDesc: 'എൻഡ്-ടു-എൻഡ് എൻക്രിപ്ഷൻ. 24 മണിക്കൂറിന് ശേഷം ഡാറ്റ സ്വയമേവ ഡിലീറ്റ് ചെയ്യപ്പെടും.',
+    qrTitle: 'തൽക്ഷണ QR കോഡ് ജനറേഷൻ',
+    qrDesc: 'നിങ്ങളുടെ സവിശേഷ QR കോഡ് ഉടൻ സ്വീകരിക്കുക. ഓഫീസർമാർ സ്കാൻ ചെയ്ത് പ്രിന്റ് ചെയ്യാൻ കഴിയും.',
+    noMiddleTitle: 'ഇടനിലക്കാരില്ല',
+    noMiddleDesc: 'നേരിട്ടുള്ള പ്രവേശനം. ഏജന്റുമാരില്ല, ഫീസുകളില്ല, ചൂഷണമില്ല.',
+    easyTitle: 'എല്ലാവർക്കും എളുപ്പം',
+    easyDesc: 'ഗ്രാമീണ, പ്രായമായ, കുറഞ്ഞ സാക്ഷരത കൈഗാരിക നഗരവാസികൾക്കായി ഡിസൈൻ ചെയ്തത്.',
+    stepsSubtitle: 'നിങ്ങളുടെ സർക്കാർ ഫോം പൂരിപ്പിക്കാൻ മൂന്ന് ലളിത പടികൾ',
+    step1Title: 'നിങ്ങളുടെ വിശദാംശങ്ങൾ സംസാരിക്കുക',
+    step1Desc: 'നിങ്ങളുടെ ഭാഷ തിരഞ്ഞെടുത്ത് സ്വാഭാവികമായി നിങ്ങളുടെ വിവരങ്ങൾ സംസാരിക്കുക. ഞങ്ങളുടെ AI നിങ്ങളുടെ കണ്ഠസ്വരം മനസ്സിലാക്കുന്നു.',
+    step2Title: 'അവലോകനം ചെയ്ത് സ്ഥിരീകരിക്കുക',
+    step2Desc: 'സ്വയമേവ പൂരിപ്പിച്ച ഫോം പരിശോധിക്കുക. ആവശ്യമെങ്കിൽ ഏതെങ്കിലും തിരുത്തലുകൾ വരുത്തുക.',
+    step3Title: 'QR കോഡ് സ്വീകരിക്കുക',
+    step3Desc: 'ഒരു സവിശേഷ QR കോഡ് സ്വീകരിക്കുക. ഓഫീസരേ പെട്ടെന്ന് ഫോം പ്രിന്റ് ചെയ്യാൻ കാണിക്കുക.',
+    ctaText: 'Vaani Ai ഉപയോഗിച്ച് ഝാമ്പ-പ്രായ സർക്കാരി സേവനങ്ങൾക്കായി ആയിരം പേരായ നാഗരികരിൽ ചേരുക',
   },
   mr: {
     title: 'व्हॉयस-आधारित सरकारी फॉर्म',
@@ -157,6 +470,29 @@ const landingLabels = {
     howItWorks: 'हे कसे कार्य करते',
     readyStarted: 'सुरुवात करण्यासाठी तयार?',
     startNow: 'आता सुरुवात करा',
+    noTyping: 'कोणतेही टाइपिंग नाही. कोणतीही साक्षरता अडचणी नाहीत. कोणतेही एजंट नाहीत.',
+    languages: 'भाषा',
+    qrValidity: 'QR वैधता',
+    voiceFirstTitle: 'व्हॉयस-प्रथमा इंटरफेस',
+    voiceFirstDesc: 'हिंदी, तेलुगु, तमिळ, बंगाली किंवा इंग्रजीत बोला. कोणतेही टाइपिंग आवश्यक नाही.',
+    multiLangTitle: 'बहुभाषी समर्थन',
+    multiLangDesc: 'अचूक भाषण ओळख सह 5+ भारतीय भाषांचे समर्थन.',
+    secureTitle: 'सुरक्षित & खाजगी',
+    secureDesc: 'एंड-टू-एंड एन्क्रिप्शन. 24 तासांनंतर डेटा आपोआप हटवला जातो.',
+    qrTitle: 'तात्कालिक QR कोड जनरेशन',
+    qrDesc: 'आपले अद्वितीय QR कोड लगेच मिळा. अधिकारी स्कॅन आणि प्रिंट करू शकतात.',
+    noMiddleTitle: 'कोणतेही दलाल नाहीत',
+    noMiddleDesc: 'थेट प्रवेश. कोणतेही एजंट नाहीत, कोणतेही शुल्क नाहीत, कोणतेही शोषण नाहीत.',
+    easyTitle: 'सर्वांसाठी सोपे',
+    easyDesc: 'ग्रामीण, वयस्क आणि कमी साक्षरता असलेल्या नागरिकांसाठी डिजाइन केलेले.',
+    stepsSubtitle: 'आपल्या सरकारी फॉर्म भरण्यासाठी तीन सोप्या पायऱ्या',
+    step1Title: 'आपले तपशील बोला',
+    step1Desc: 'आपली भाषा निवडा आणि स्वाभाविकरित्या आपली माहिती बोला. आमचे AI आपली आवाज समजते.',
+    step2Title: 'पुनरावलोकन आणि पुष्टी करा',
+    step2Desc: 'स्वतः भरलेल्या फॉर्मची तपासणी करा. आवश्यक असल्यास कोणतेही सुधार करा.',
+    step3Title: 'QR कोड मिळा',
+    step3Desc: 'एक अद्वितीय QR कोड प्राप्त करा. तुरुंगाधीशांना तात्काळ फॉर्म प्रिंट करायला दाखवा.',
+    ctaText: 'Vaani Ai वापरून अडचणीमुक्त सरकारी सेवांसाठी हजारो नागरिकांसह सामील व्हा',
   },
   bn: {
     title: 'ভয়েস-চালিত সরকারি ফর্ম',
@@ -171,6 +507,29 @@ const landingLabels = {
     howItWorks: 'এটি কীভাবে কাজ করে',
     readyStarted: 'শুরু করতে প্রস্তুত?',
     startNow: 'এখনই শুরু করুন',
+    noTyping: 'কোন টাইপিং নেই। সাক্ষরতার কোন বাধা নেই। কোন এজেন্ট নেই।',
+    languages: 'ভাষা',
+    qrValidity: 'QR বৈধতা',
+    voiceFirstTitle: 'ভয়েস-প্রথম ইন্টারফেস',
+    voiceFirstDesc: 'হিন্দি, তেলুগু, তামিল, বাংলা বা ইংরেজিতে কথা বলুন। কোন টাইপিং প্রয়োজন নেই।',
+    multiLangTitle: 'বহুভাষিক সমর্থন',
+    multiLangDesc: 'নির্ভুল কণ্ঠস্বর স্বীকৃতি সহ 5+ ভারতীয় ভাষার জন্য সমর্থন।',
+    secureTitle: 'সুরক্ষিত এবং ব্যক্তিগত',
+    secureDesc: 'এন্ড-টু-এন্ড এনক্রিপশন। 24 ঘন্টা পরে ডেটা স্বয়ংক্রিয়ভাবে মুছে ফেলা হয়।',
+    qrTitle: 'তাৎক্ষণিক QR কোড জেনারেশন',
+    qrDesc: 'আপনার অনন্য QR কোড তাৎক্ষণিকভাবে পান। অফিসাররা স্ক্যান এবং প্রিন্ট করতে পারেন।',
+    noMiddleTitle: 'কোন মধ্যস্থতাকারী নেই',
+    noMiddleDesc: 'সরাসরি অ্যাক্সেস। কোন এজেন্ট নেই, কোন ফি নেই, কোন শোষণ নেই।',
+    easyTitle: 'সবার জন্য সহজ',
+    easyDesc: 'গ্রামীণ, বয়স্ক এবং কম সাক্ষর নাগরিকদের জন্য ডিজাইন করা হয়েছে।',
+    stepsSubtitle: 'আপনার সরকারি ফর্ম পূরণের জন্য তিনটি সহজ ধাপ',
+    step1Title: 'আপনার বিবরণ বলুন',
+    step1Desc: 'আপনার ভাষা নির্বাচন করুন এবং প্রাকৃতিকভাবে আপনার তথ্য বলুন। আমাদের AI আপনার কণ্ঠস্বর বোঝে।',
+    step2Title: 'পর্যালোচনা ও নিশ্চিত করুন',
+    step2Desc: 'স্বয়ংক্রিয়ভাবে পূর্ণ করা ফর্ম পরীক্ষা করুন। প্রয়োজনে কোনো সংশোধন করুন।',
+    step3Title: 'QR কোড পান',
+    step3Desc: 'একটি অনন্য QR কোড পান। অফিসারকে তাৎক্ষণিকভাবে ফর্ম প্রিন্ট করতে দেখান।',
+    ctaText: 'Vaani Ai ব্যবহার করে ঝামেলামুক্ত সরকারি পরিষেবার জন্য হাজার হাজার নাগরিকের সাথে যোগ দিন',
   },
   gu: {
     title: 'અવાજ-આધારિત સરકારી ફોર્મ્સ',
@@ -185,6 +544,29 @@ const landingLabels = {
     howItWorks: 'તે કેવી રીતે કાર્ય કરે છે',
     readyStarted: 'શરૂ કરવા માટે તૈયાર?',
     startNow: 'હવે શરૂ કરો',
+    noTyping: 'કોઈ ટાઈપિંગ નહીં. કોઈ સાક્ષરતા અવરોધ નહીં. કોઈ એજન્ટ નહીં.',
+    languages: 'ભાષા',
+    qrValidity: 'QR માન્યતા',
+    voiceFirstTitle: 'અવાજ-પ્રથમ ઇન્ટરફેસ',
+    voiceFirstDesc: 'ગુજરાતીમાં, હિન્દીમાં, તેલુગુમાં, તમિલમાં કે કન્નડમાં બોલો. કોઈ ટાઈપિંગ આવશ્યક નથી.',
+    multiLangTitle: 'બહુભાષી સમર્થન',
+    multiLangDesc: 'સચોટ વાણી ઓળખ સાથે 5+ ભારતીય ભાષાનું સમર્થન.',
+    secureTitle: 'સુરક્ષિત અને ખાનગી',
+    secureDesc: 'અંતથી અંત એનક્રિપ્શન. 24 કલાક પછી ડેટા આપોઆપ કાઢી નાખવામાં આવે છે.',
+    qrTitle: 'તાત્કાલીક QR કોડ જનરેશન',
+    qrDesc: 'તમારો અનોખો QR કોડ તાત્કાલીક મેળવો. અધિકારીઓ સ્કેન અને છાપી શકે છે.',
+    noMiddleTitle: 'કોઈ મધ્યસ્થી નથી',
+    noMiddleDesc: 'સીધો અ્যાક્સેસ. કોઈ એજન્ટ નથી, કોઈ ચાર્જ નથી, કોઈ શોષણ નથી.',
+    easyTitle: 'બધા માટે સરળ',
+    easyDesc: 'ગ્રામીણ, વયસ્ક અને ઓછી સાક્ષરતા ધરાવતા નાગરિકો માટે ડિજાઇન કર્યું.',
+    stepsSubtitle: 'તમારા સરકારી ફોર્મ ભરવા માટે ત્રણ સરળ પગલાં',
+    step1Title: 'તમારી વિગતો બોલો',
+    step1Desc: 'તમારી ભાષા પસંદ કરો અને કુદરતી રીતે તમારી માહિતી બોલો. આમનો AI તમારી આવાજ સમજે છે.',
+    step2Title: 'પુનરાવલોકન અને પુષ્ટી કરો',
+    step2Desc: 'આપોઆપ ભરેલ ફોર્મ તપાસો. જરૂર પડે તો કોઈ સુધાર કરો.',
+    step3Title: 'QR કોડ મેળવો',
+    step3Desc: 'એક અનોખું QR કોડ મેળવો. અધિકારીને તાત્કાલીક ફોર્મ છાપવા માટે બતાવો.',
+    ctaText: 'Vaani Ai વાપરીને પરેશાનીમુક્ત સરકારી સેવાઓ માટે હજારો નાગરિક સાથે જોડાઓ',
   },
   or: {
     title: 'ଭଏସ-ଆଧାରିତ ସରକାରୀ ଫର୍ମ',
@@ -199,6 +581,29 @@ const landingLabels = {
     howItWorks: 'ଏଟା କିଭାବେ କାଜ କରେ',
     readyStarted: 'ଆରମ୍ଭ ସିଦ୍ଧ?',
     startNow: 'ଏବେ ଆରମ୍ଭ କରନ୍ତୁ',
+    noTyping: 'କୌଣସି ଟାଇପିଂ ନାହିଁ। କୌଣସି ସାକ୍ଷରତା ବାଧା ନାହିଁ। କୌଣସି ଏଜେଣ୍ଟ ନାହିଁ।',
+    languages: 'ଭାଷା',
+    qrValidity: 'QR ମଞ୍ଜୁରଣ',
+    voiceFirstTitle: 'ଭଏସ-ପ୍ରଥମ ଇନ୍ଟରଫେସ',
+    voiceFirstDesc: 'ଓଡିଆ, ହିନ୍ଦୀ, ତେଲୁଗୁ, ତାମିଲ, କନ୍ନଡ କିମ୍ବା ଇଂରାଜୀରେ କହନ୍ତୁ। ଟାଇପିଂ ଦରକାର ନାହିଁ।',
+    multiLangTitle: 'ବହୁଭାଷିକ ସମର୍ଥନ',
+    multiLangDesc: 'ସଠିକ ଭାଷଣ ସ୍ୱୀକୃତି ସହିତ 5+ ଭାରତୀୟ ଭାଷାଗୁଡ଼ିକ ପାଇଁ ସମର୍ଥନ।',
+    secureTitle: 'ସୁରକ୍ଷିତ ଏବଂ ବ୍ୟକ୍ତିଗତ',
+    secureDesc: 'ଏଣ୍ଡ-ଟୁ-ଏଣ୍ଡ ଏନକ୍ରିପ୍ଶନ। 24 ଘଣ୍ଟା ପରେ ଡାଟା ସ୍ୱୟଂଚାଳିତ ଭାବେ ଡିଲିଟ ଅଛି।',
+    qrTitle: 'ତାତ୍କ୍ଷଣିକ QR କୋଡ ଜେନେରେସନ୍',
+    qrDesc: 'ଆପଣଙ୍କର ଅନନ୍ୟ QR କୋଡ ତାତ୍କ୍ଷଣିକ ପାଇନ୍ତୁ। ଅଫିସର୍ମାନେ ସ୍କ୍ୟାନ୍ ଏବଂ ଛାପିବାକୁ ପାରିବେ।',
+    noMiddleTitle: 'କୌଣସି ମାଧ୍ୟମ ନାହିଁ',
+    noMiddleDesc: 'ସିଧା ଆକ୍ସେସ। କୌଣସି ଏଜେଣ୍ଟ ନାହିଁ, କୌଣସି ଫି ନାହିଁ, କୌଣସି ଶୋଷଣ ନାହିଁ।',
+    easyTitle: 'ସବୁଙ୍କ ପାଇଁ ସୁଲଭ',
+    easyDesc: 'ଗ୍ରାମୀଣ, ବୟସ୍କ ଏବଂ ସୀମିତ ସାକ୍ଷରତା ନାଗରିକମାନଙ୍କ ପାଇଁ ଡିଜାଇନ୍ କରାଯାଇଛି।',
+    stepsSubtitle: 'ଆପଣଙ୍କର ସରକାରୀ ଫର୍ମ ପୂରଣ ପାଇଁ ତିନୋଟି ସରଳ ପଦକ୍ଷେପ',
+    step1Title: 'ଆପଣଙ୍କର ବିବରଣୀ କହନ୍ତୁ',
+    step1Desc: 'ଆପଣଙ୍କର ଭାଷା ଚୟନ କରନ୍ତୁ ଏବଂ ସ୍ୱାଭାବିକ ଭାବରେ ଆପଣଙ୍କର ତଥ୍ୟ କହନ୍ତୁ। ଆମାର AI ଆପଣଙ୍କର ଧ୍ୱନି ବୁଝନ୍ତୋ।',
+    step2Title: 'ସମୀକ୍ଷା ଏବଂ ନିଶ୍ଚିତ କରନ୍ତୁ',
+    step2Desc: 'ସ୍ୱୟଂଚାଳିତ ଭାବରେ ପୂର୍ଣ୍ଣ ଫର୍ମ ଯାଚାଇ ଦେଖନ୍ତୁ। ଆବଶ୍ୟକ ପକ୍ଷେ କୌଣସି ସଂଶୋଧନ କରନ୍ତୁ।',
+    step3Title: 'QR କୋଡ ପାଇନ୍ତୁ',
+    step3Desc: 'ଏକ ଅନନ୍ୟ QR କୋଡ ପାଇନ୍ତୁ। ଅଫିସରକୁ ତାତ୍କାଳିକ ଫର୍ମ ଛାପିବା ପାଇଁ ଦେଖାଇ ଦିନ୍ତୁ।',
+    ctaText: 'Vaani Ai ବ୍ୟବହାର କରି ଝଞ୍ଝଟମୁକ୍ତ ସରକାରୀ ସେବା ଦ୍ୱାରା ହଜାର ନାଗରିକଙ୍କ ସହ ଯୋଗ ଦିନ୍ତୁ',
   },
   pa: {
     title: 'ਵਾਇਸ-ਆਧਾਰਿਤ ਸਰਕਾਰੀ ਫਾਰਮ',
@@ -213,6 +618,29 @@ const landingLabels = {
     howItWorks: 'ਇਹ ਕਿਵੇ ਕਾਮ ਕਰਦਾ ਹੈ',
     readyStarted: 'ਸ਼ੁਰੂ ਕਰਨ ਲਈ ਤਿਆਰ?',
     startNow: 'ਹੁਣ ਸ਼ੁਰੂ ਕਰੋ',
+    noTyping: 'ਕੋਈ ਟਾਈਪਿੰਗ ਨਹੀਂ। ਕੋਈ ਸਾਖਰਤਾ ਰੁਕਾਵਟ ਨਹੀਂ। ਕੋਈ ਏਜੰਟ ਨਹੀਂ।',
+    languages: 'ਭਾਸ਼ਾਵਾਂ',
+    qrValidity: 'QR ਮਾਨਤਾ',
+    voiceFirstTitle: 'ਵਾਇਸ-ਪਹਿਲਾ ਇੰਟਰਫੇਸ',
+    voiceFirstDesc: 'ਪੰਜਾਬੀ, ਹਿੰਦੀ, ਤੇਲੁਗੂ, ਤਾਮਿਲ ਜਾਂ ਕੰਨੜ ਵਿੱਚ ਬੋਲੋ। ਕੋਈ ਟਾਈਪਿੰਗ ਦੀ ਲੋੜ ਨਹੀਂ।',
+    multiLangTitle: 'ਬਹੁ-ਭਾਸ਼ਾ ਸਹਾਇਤਾ',
+    multiLangDesc: 'ਸਟੀਕ ਵੈੱਚ ਟੁ ਸਪੀਚ ਚੀਨ੍ਹ ਦੇ ਨਾਲ 5+ ਭਾਰਤੀ ਭਾਸ਼ਾਵਾਂ ਲਈ ਸਹਾਇਤਾ।',
+    secureTitle: 'ਸੁਰੱਖਿਅਤ ਅਤੇ ਨਿੱਜੀ',
+    secureDesc: 'ਏਂਡ-ਟੂ-ਏਂਡ ਐਨਕ੍ਰਿਪਸ਼ਨ। 24 ਘੰਟਿਆਂ ਬਾਅਦ ਡੇਟਾ ਆਪਣੇ ਆਪ ਤੇ ਮਿਟ ਜਾਂਦਾ ਹੈ।',
+    qrTitle: 'ਤੁਰੰਤ QR ਕੋਡ ਜਨਰੇਸ਼ਨ',
+    qrDesc: 'ਆਪਣਾ ਵਿਲੱਖਣ QR ਕੋਡ ਤੁਰੰਤ ਪ੍ਰਾਪਤ ਕਰੋ। ਅਫਸਰ ਸਕੈਨ ਅਤੇ ਪ੍ਰਿੰਟ ਕਰ ਸਕਦੇ ਹਨ।',
+    noMiddleTitle: 'ਕੋਈ ਦਲਾਲ ਨਹੀਂ',
+    noMiddleDesc: 'ਸੱਚਮੁੱਚ ਲਈ ਰਸਤਾ। ਕੋਈ ਏਜੰਟ ਨਹੀਂ, ਕੋਈ ਫੀਸ ਨਹੀਂ, ਕੋਈ ਸ਼ੋਸ਼ਣ ਨਹੀਂ।',
+    easyTitle: 'ਸਭ ਲਈ ਆਸਾਨ',
+    easyDesc: 'ਗ੍ਰਾਮੀਣ, ਬਜ਼ੁਰਗ ਅਤੇ ਘੱਟ ਸਾਖਰਤਾ ਵਾਲੇ ਨਾਗਰਿਕਾਂ ਲਈ ਡਿਜ਼ਾਇਨ ਕੀਤਾ ਗਿਆ।',
+    stepsSubtitle: 'ਆਪਣਾ ਸਰਕਾਰੀ ਫਾਰਮ ਭਰਨ ਲਈ ਤਿੰਨ ਆਸਾਨ ਪੜਾਅ',
+    step1Title: 'ਆਪਣੀ ਜਾਣਕਾਰੀ ਬੋਲੋ',
+    step1Desc: 'ਆਪਣੀ ਭਾਸ਼ਾ ਚੁਣੋ ਅਤੇ ਕੁਦਰਤੀ ਤੌਰ ਤੇ ਆਪਣੀ ਜਾਣਕਾਰੀ ਬੋਲੋ। ਸਾਡਾ AI ਤੁਹਾਡੀ ਆਵਾਜ ਨੂੰ ਸਮਝਦਾ ਹੈ।',
+    step2Title: 'ਸਮੀਖਿਆ ਕਰੋ ਅਤੇ ਪ੍ਰਵਰਧਨ ਕਰੋ',
+    step2Desc: 'ਖੁੰਮ ਆਪ ਬਰਤ ਫਾਰਮ ਦੀ ਜਾਂਚ ਕਰੋ। ਲੋੜ ਪਰੇ ਕੋਈ ਸਲਾਹਵੇ ਕਰੋ।',
+    step3Title: 'QR ਕੋਡ ਪ੍ਰਾਪਤ ਕਰੋ',
+    step3Desc: 'ਇੱਕ ਵਿਲੱਖਣ QR ਕੋਡ ਪ੍ਰਾਪਤ ਕਰੋ। ਅਫਸਰ ਨੂੰ ਤੁਰੰਤ ਫਿੰਮ ਪ੍ਰਿੰਟ ਕਰਨ ਲਈ ਦਿਖਾਉ।',
+    ctaText: 'Vaani Ai ਦੀ ਵਰਤੋਂ ਕਰਕੇ ਝਜਿਬਾ-ਮੁਕਤ ਸਰਕਾਰੀ ਸੇਵਾਵਾਂ ਲਈ ਹਜ਼ਾਰਾਂ ਨਾਗਰਿਕਾਂ ਦੇ ਨਾਲ ਸੰਭਂਦ ਪ੍ਛ੍ਤ ਘਣ।',
   },
   ur: {
     title: 'وائس سے چلنے والی حکومتی فارمز',
@@ -227,32 +655,86 @@ const landingLabels = {
     howItWorks: 'یہ کیسے کام کرتا ہے',
     readyStarted: 'شروع کرنے کے لیے تیار ہیں؟',
     startNow: 'اب شروع کریں',
+    noTyping: 'کوئی ٹائپنگ نہیں۔ کوئی خواندگی کی رکاوٹ نہیں۔ کوئی ایجنٹ نہیں۔',
+    languages: 'زبانیں',
+    qrValidity: 'QR درستگی',
+    voiceFirstTitle: 'وائس-پہلے انٹرفیس',
+    voiceFirstDesc: 'اردو، ہندی، تیلگو، تمل یا کنڑ میں بات کریں۔ کوئی ٹائپنگ کی ضرورت نہیں۔',
+    multiLangTitle: 'کثیر الثقافت معاونت',
+    multiLangDesc: 'درست آواز کی شناخت کے ساتھ 5+ بھارتی زبانوں کی معاونت۔',
+    secureTitle: 'محفوظ اور نجی',
+    secureDesc: 'شروع سے آخر تک خفیہ کاری۔ 24 گھنٹے کے بعد ڈیٹا خودکار طور پر حذف ہو جاتا ہے۔',
+    qrTitle: 'فوری QR کوڈ تیاری',
+    qrDesc: 'اپنا منفرد QR کوڈ فوری حاصل کریں۔ افسران اسکین اور پرنٹ کر سکتے ہیں۔',
+    noMiddleTitle: 'کوئی درمیانہ فریق نہیں',
+    noMiddleDesc: 'براہ راست رسائی۔ کوئی ایجنٹ نہیں، کوئی فیس نہیں، کوئی استحصال نہیں۔',
+    easyTitle: 'سب کے لیے آسان',
+    easyDesc: 'دیہاتی، بزرگ اور کم خواندگی والے شہری کے لیے ڈیزائن کیا گیا۔',
+    stepsSubtitle: 'اپنا حکومتی فارم بھرنے کے لیے تین آسان مراحل',
+    step1Title: 'اپنی تفصیلات بتائیں',
+    step1Desc: 'اپنی زبان منتخب کریں اور قدرتی طریقے سے اپنی معلومات بتائیں۔ ہمارا AI آپ کی آواز سمجھتا ہے۔',
+    step2Title: 'دوبارہ جانچیں اور تصدیق کریں',
+    step2Desc: 'خود بخود بھرے ہوئے فارم کو جانچیں۔ ضرورت کے مطابق کوئی بھی اصلاح کریں۔',
+    step3Title: 'QR کوڈ حاصل کریں',
+    step3Desc: 'ایک منفرد QR کوڈ حاصل کریں۔ افسر کو فوری فارم پرنٹ کرنے دکھائیں۔',
+    ctaText: 'Vaani Ai استعمال کرتے ہوئے مسئلہ سے پاک حکومتی خدمات کے لیے ہزاروں شہری کے ساتھ شامل ہوں',
   },
 };
 
 export function LandingPage({ onGetStarted, onStartSpeaking, selectedLanguage }: LandingPageProps) {
-  // Always show English on landing page
-  const currentLabels = landingLabels['en'];
+  // Display text in selected language, fallback to English
+  const currentLabels = landingLabels[selectedLanguage?.code as keyof typeof landingLabels] || landingLabels['en'];
   const [isPlayingInstruction, setIsPlayingInstruction] = useState(false);
+  // Ref mirror — lets the confirmation useEffect read the latest value
+  // without adding isPlayingInstruction to the dep array (keeps array size stable).
+  const isPlayingInstructionRef = useRef(false);
+  const setIsPlayingInstructionSync = (val: boolean) => {
+    isPlayingInstructionRef.current = val;
+    setIsPlayingInstruction(val);
+  };
+  const [lastPlayedLanguageCode, setLastPlayedLanguageCode] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const currentLangIndex = useRef(0);
+  // true only after the user physically clicks something — prevents autoplay-policy errors
+  // that occur when selectedLanguage is restored from localStorage before any interaction.
+  const userHasInteracted = useRef(false);
+
+  // Stop all audio playback safely
+  const stopAudio = () => {
+    if (audioRef.current) {
+      try {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+        audioRef.current.src = '';
+      } catch {
+        // Ignore errors during stop
+      }
+    }
+  };
 
   // Play voice instructions in all languages sequentially
   const playVoiceInstructions = async () => {
-    if (isPlayingInstruction) return;
-    setIsPlayingInstruction(true);
+    userHasInteracted.current = true;
+    if (isPlayingInstructionRef.current) return;
+    setIsPlayingInstructionSync(true);
 
-    const languages = ['en', 'hi', 'te', 'ta', 'kn', 'ml', 'mr', 'bn', 'gu', 'pa', 'or', 'ur'];
+    const languages = Object.keys(voiceInstructions);
     currentLangIndex.current = 0;
 
     const playNextLanguage = async () => {
       if (currentLangIndex.current >= languages.length) {
-        setIsPlayingInstruction(false);
+        setIsPlayingInstructionSync(false);
         return;
       }
 
       const lang = languages[currentLangIndex.current];
       const text = voiceInstructions[lang];
+      if (!text) {
+        console.warn(`No voice instruction found for language: ${lang}`);
+        currentLangIndex.current++;
+        playNextLanguage();
+        return;
+      }
 
       try {
         const response = await fetch(`/api/tts-proxy?text=${encodeURIComponent(text)}&lang=${lang}`);
@@ -260,27 +742,34 @@ export function LandingPage({ onGetStarted, onStartSpeaking, selectedLanguage }:
           const blob = await response.blob();
           const url = URL.createObjectURL(blob);
 
-          if (audioRef.current) {
-            audioRef.current.pause();
-          }
+          // Stop any previous audio
+          stopAudio();
 
           audioRef.current = new Audio(url);
-          audioRef.current.onended = () => {
+          audioRef.current.volume = 1;
+
+          const handleCompletion = () => {
             URL.revokeObjectURL(url);
             currentLangIndex.current++;
             playNextLanguage();
           };
-          audioRef.current.onerror = () => {
-            URL.revokeObjectURL(url);
-            currentLangIndex.current++;
-            playNextLanguage();
-          };
-          await audioRef.current.play();
+
+          audioRef.current.onended = handleCompletion;
+          audioRef.current.onerror = handleCompletion;
+
+          try {
+            await audioRef.current.play();
+          } catch (err) {
+            console.warn(`Audio play error for language ${lang}:`, err);
+            handleCompletion();
+          }
         } else {
+          console.warn(`TTS fetch failed for language ${lang}:`, response.status);
           currentLangIndex.current++;
           playNextLanguage();
         }
-      } catch {
+      } catch (err) {
+        console.warn(`TTS fetch exception for language ${lang}:`, err);
         currentLangIndex.current++;
         playNextLanguage();
       }
@@ -289,16 +778,81 @@ export function LandingPage({ onGetStarted, onStartSpeaking, selectedLanguage }:
     playNextLanguage();
   };
 
+  // Play language confirmation message when language is selected
+  const playLanguageConfirmation = async (selectedLang: Language) => {
+    if (!selectedLang || isPlayingInstructionRef.current) return;
+    
+    // Only play if language has changed
+    if (lastPlayedLanguageCode === selectedLang.code) {
+      return;
+    }
+    
+    setLastPlayedLanguageCode(selectedLang.code);
+    
+    try {
+      // Get the confirmation message in the user's selected language
+      const confirmationText = languageConfirmationMessages[selectedLang.code]?.[selectedLang.code] || 
+                               languageConfirmationMessages['en']?.[selectedLang.code] || 
+                               `You have selected ${selectedLang.name}`;
+      
+      const response = await fetch(`/api/tts-proxy?text=${encodeURIComponent(confirmationText)}&lang=${selectedLang.code}`);
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+
+        // Stop any previous audio
+        stopAudio();
+
+        audioRef.current = new Audio(url);
+        audioRef.current.volume = 1;
+
+        const handleCompletion = () => {
+          URL.revokeObjectURL(url);
+        };
+
+        audioRef.current.onended = handleCompletion;
+        audioRef.current.onerror = handleCompletion;
+
+        try {
+          await audioRef.current.play();
+        } catch (playError: any) {
+          // Silently ignore — NotAllowedError is a browser autoplay policy restriction,
+          // not a real error. AbortError means another sound interrupted this one.
+          handleCompletion();
+        }
+      }
+    } catch {
+      // Silently ignore network/fetch errors for optional confirmation audio
+    }
+  };
+
+  // Play confirmation only when the user has already interacted with the page.
+  // Dep array is always exactly [selectedLanguage?.code] — stable size, no React warning.
+  // We read isPlayingInstructionRef (not state) so it never needs to be a dep.
+  useEffect(() => {
+    if (!selectedLanguage || isPlayingInstructionRef.current) return;
+    if (!userHasInteracted.current) return;
+    playLanguageConfirmation(selectedLanguage);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedLanguage?.code]);
+
   // Block Get Started if no language selected
+  const handleStartSpeakingClick = () => {
+    userHasInteracted.current = true;
+    onStartSpeaking();
+  };
+
   const handleGetStartedClick = (e?: React.MouseEvent) => {
     e?.preventDefault();
     e?.stopPropagation();
+    userHasInteracted.current = true;
 
+    // If no language selected, play instructions in all languages and block redirect
     if (!selectedLanguage) {
       playVoiceInstructions();
       return;
     }
-
+    // If language is selected, allow redirect to sign-in
     onGetStarted();
   };
 
@@ -325,7 +879,7 @@ export function LandingPage({ onGetStarted, onStartSpeaking, selectedLanguage }:
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <img src="/logo.jpeg" alt="Logo" className="h-16 w-16 rounded-lg object-cover" />
-              <span className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">Services</span>
+              <span className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">Vaani Ai</span>
               {selectedLanguage && (
                 <div className="ml-4 inline-flex items-center gap-2 px-3 py-1 bg-white/10 text-gray-300 text-sm font-semibold rounded-full border border-white/20">
                   <span>{selectedLanguage.flag}</span>
@@ -334,7 +888,7 @@ export function LandingPage({ onGetStarted, onStartSpeaking, selectedLanguage }:
               )}
             </div>
             <div className="flex gap-3">
-              <Button onClick={onStartSpeaking} className="bg-gradient-to-r from-cyan-500 to-purple-600 hover:opacity-90 text-white rounded-full px-6 font-semibold border-0">
+              <Button onClick={handleStartSpeakingClick} className="bg-gradient-to-r from-cyan-500 to-purple-600 hover:opacity-90 text-white rounded-full px-6 font-semibold border-0">
                 {currentLabels.startSpeaking}
               </Button>
               <Button onClick={handleGetStartedClick} className={`rounded-full px-6 font-semibold border ${selectedLanguage ? 'bg-white/10 text-white hover:bg-white/20 border-white/20' : 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50 animate-pulse'}`}>
@@ -367,11 +921,11 @@ export function LandingPage({ onGetStarted, onStartSpeaking, selectedLanguage }:
             {currentLabels.subtitle}
           </p>
           <p className="text-lg text-white font-bold mb-10 card-fall" style={{ animationDelay: '0.24s' }}>
-            No typing. No literacy barriers. No agents.
+            {currentLabels.noTyping}
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center card-fall" style={{ animationDelay: '0.32s' }}>
-            <Button onClick={onStartSpeaking} size="lg" className="bg-gradient-to-r from-cyan-500 to-purple-600 hover:opacity-90 text-white h-14 px-8 rounded-lg text-lg font-bold border-0 shadow-lg" style={{ transition: 'transform 0.2s ease, opacity 0.2s ease' }}
+            <Button onClick={handleStartSpeakingClick} size="lg" className="bg-gradient-to-r from-cyan-500 to-purple-600 hover:opacity-90 text-white h-14 px-8 rounded-lg text-lg font-bold border-0 shadow-lg" style={{ transition: 'transform 0.2s ease, opacity 0.2s ease' }}
               onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.05)')}
               onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}>
               <Mic className="mr-2 h-5 w-5" />
@@ -392,8 +946,8 @@ export function LandingPage({ onGetStarted, onStartSpeaking, selectedLanguage }:
           {/* Stats Row */}
           <div className="mt-16 flex flex-wrap justify-center gap-6">
             {[
-              { value: '5+', label: 'Languages' },
-              { value: '24hrs', label: 'QR Validity' },
+              { value: '5+', label: currentLabels.languages },
+              { value: '24hrs', label: currentLabels.qrValidity },
               { value: '100%', label: currentLabels.secure },
             ].map((stat, index) => (
               <div key={stat.label} className="card-hover px-8 py-5 bg-white/5 border border-white/10 rounded-2xl text-center min-w-[110px] card-fall" style={{ animationDelay: `${0.4 + (index * 0.08)}s` }}>
@@ -417,12 +971,12 @@ export function LandingPage({ onGetStarted, onStartSpeaking, selectedLanguage }:
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
-              { icon: <Mic className="h-6 w-6 text-cyan-400" />, bg: 'bg-cyan-500/20', title: 'Voice-First Interface', desc: 'Speak in Hindi, Telugu, Tamil, Bengali, or English. No typing required.' },
-              { icon: <Languages className="h-6 w-6 text-purple-400" />, bg: 'bg-purple-500/20', title: 'Multi-Language Support', desc: 'Support for 5+ Indian languages with accurate speech recognition.' },
-              { icon: <Shield className="h-6 w-6 text-emerald-400" />, bg: 'bg-emerald-500/20', title: 'Secure & Private', desc: 'End-to-end encryption. Data deleted after 24 hours automatically.' },
-              { icon: <QrCode className="h-6 w-6 text-yellow-400" />, bg: 'bg-yellow-500/20', title: 'Instant QR Generation', desc: 'Get your unique QR code instantly. Officers can scan and print.' },
-              { icon: <Users className="h-6 w-6 text-rose-400" />, bg: 'bg-rose-500/20', title: 'No Middlemen', desc: 'Direct access. No agents, no fees, no exploitation.' },
-              { icon: <CheckCircle2 className="h-6 w-6 text-blue-400" />, bg: 'bg-blue-500/20', title: 'Easy for Everyone', desc: 'Designed for rural, elderly, and low-literacy citizens.' },
+              { icon: <Mic className="h-6 w-6 text-cyan-400" />, bg: 'bg-cyan-500/20', title: currentLabels.voiceFirstTitle, desc: currentLabels.voiceFirstDesc },
+              { icon: <Languages className="h-6 w-6 text-purple-400" />, bg: 'bg-purple-500/20', title: currentLabels.multiLangTitle, desc: currentLabels.multiLangDesc },
+              { icon: <Shield className="h-6 w-6 text-emerald-400" />, bg: 'bg-emerald-500/20', title: currentLabels.secureTitle, desc: currentLabels.secureDesc },
+              { icon: <QrCode className="h-6 w-6 text-yellow-400" />, bg: 'bg-yellow-500/20', title: currentLabels.qrTitle, desc: currentLabels.qrDesc },
+              { icon: <Users className="h-6 w-6 text-rose-400" />, bg: 'bg-rose-500/20', title: currentLabels.noMiddleTitle, desc: currentLabels.noMiddleDesc },
+              { icon: <CheckCircle2 className="h-6 w-6 text-blue-400" />, bg: 'bg-blue-500/20', title: currentLabels.easyTitle, desc: currentLabels.easyDesc },
             ].map((card, index) => (
               <div
                 key={card.title}
@@ -447,14 +1001,14 @@ export function LandingPage({ onGetStarted, onStartSpeaking, selectedLanguage }:
             {currentLabels.howItWorks}
           </h2>
           <p className="text-center text-gray-400 mb-14 card-fall" style={{ animationDelay: '1.36s' }}>
-            Three simple steps to fill your government form
+            {currentLabels.stepsSubtitle}
           </p>
 
           <div className="grid sm:grid-cols-3 gap-6">
             {[
-              { num: '1', title: 'Speak Your Details', desc: 'Choose your language and speak your information naturally. Our AI understands your voice.' },
-              { num: '2', title: 'Review & Confirm', desc: 'Check the auto-filled form. Make any corrections if needed.' },
-              { num: '3', title: 'Get QR Code', desc: 'Receive a unique QR code. Show it to the officer to print your form instantly.' },
+              { num: '1', title: currentLabels.step1Title, desc: currentLabels.step1Desc },
+              { num: '2', title: currentLabels.step2Title, desc: currentLabels.step2Desc },
+              { num: '3', title: currentLabels.step3Title, desc: currentLabels.step3Desc },
             ].map((step, index) => (
               <div
                 key={step.num}
@@ -479,7 +1033,7 @@ export function LandingPage({ onGetStarted, onStartSpeaking, selectedLanguage }:
           style={{ animationDelay: '1.68s' }}
         >
           <h2 className="text-4xl font-bold mb-4">{currentLabels.readyStarted}</h2>
-          <p className="text-white/80 mb-8 text-lg">Join thousands of citizens using Vaani Ai for hassle-free government services</p>
+          <p className="text-white/80 mb-8 text-lg">{currentLabels.ctaText}</p>
           <Button
             onClick={handleGetStartedClick}
             size="lg"

@@ -15,12 +15,14 @@ import {
   stopSpeaking,
   getFieldDescription,
   setRecognitionLanguage,
+  transcribeWithGroqWhisper,
   type VoiceRecognitionResult,
 } from '@/lib/voice-utils';
 import { createQRSubmission, generateQRImageUrl } from '@/lib/qr-utils';
 import { GOVERNMENT_SERVICES, getTranslatedService } from '@/lib/government-services';
 import { translations } from '@/lib/translations';
 import { FIELD_TRANSLATIONS } from '@/lib/field-translations';
+import { useAudioRecorder } from '@/lib/audio-recorder';
 import QRDisplay from './qr-display';
 
 interface VoiceFormProps {
@@ -46,14 +48,19 @@ interface BackendResponse {
 const VoiceFormComponent = ({ service, userEmail, language = 'en-IN', selectedLocation, onSubmitSuccess, onSubmit, onBack }: VoiceFormProps) => {
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [currentFieldIndex, setCurrentFieldIndex] = useState(0);
-  const [isListening, setIsListening] = useState(false);
   const [interim, setInterim] = useState('');
   const [isReviewing, setIsReviewing] = useState(false);
   const [submittedQR, setSubmittedQR] = useState<any>(null);
   const [voiceError, setVoiceError] = useState<string | null>(null);
-  const [isStarting, setIsStarting] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [backendResponse, setBackendResponse] = useState<string | null>(null);
+  const [useGroqWhisper] = useState(true); // Use Groq Whisper by default
+  const [shouldTranscribeBlob, setShouldTranscribeBlob] = useState(false);
+  
+  // Audio recording with Groq Whisper
+  const { isRecording, recordingTime, audioBlob, startRecording, stopRecording, resetRecording } = useAudioRecorder();
+  
+  // Fallback to Web Speech API
   const recognitionRef = useRef<any | null>(null);
 
   const fields = service?.fields || [];
@@ -128,6 +135,42 @@ const VoiceFormComponent = ({ service, userEmail, language = 'en-IN', selectedLo
       fetchAndSpeakPrompt();
     }
   }, [currentFieldIndex, language, isReviewing, submittedQR]);
+
+  // Cleanup audio recording when changing fields or language
+  useEffect(() => {
+    if (isRecording) {
+      stopRecording();
+    }
+    resetRecording();
+    setInterim('');
+    setVoiceError(null);
+  }, [currentFieldIndex, language]);
+
+  // Handle transcription when audio blob is ready
+  useEffect(() => {
+    if (shouldTranscribeBlob && audioBlob) {
+      setShouldTranscribeBlob(false);
+      
+      const transcribeNow = async () => {
+        console.log('[VoiceForm] Transcribing with Groq Whisper, blob size:', audioBlob.size);
+        const langCode = (language || 'en-IN').split('-')[0];
+        const result = await transcribeWithGroqWhisper(audioBlob, langCode);
+
+        resetRecording();
+
+        if (result.success && result.text) {
+          console.log('[VoiceForm] Groq transcription result:', result.text);
+          sendToBackend(result.text.trim(), currentField.id);
+        } else {
+          console.error('[VoiceForm] Groq transcription failed:', result.error);
+          setVoiceError(result.error || t.failedToProcess);
+          setIsProcessing(false);
+        }
+      };
+      
+      transcribeNow();
+    }
+  }, [shouldTranscribeBlob, audioBlob]);
 
   // Send transcription to backend for processing
   const sendToBackend = async (transcript: string, fieldId: string) => {
@@ -232,11 +275,10 @@ const VoiceFormComponent = ({ service, userEmail, language = 'en-IN', selectedLo
     }
   };
 
-  const handleStartListening = () => {
-    console.log('[VoiceForm] Button clicked - handleStartListening called');
-    console.log('[VoiceForm] Current state - isListening:', isListening, 'isStarting:', isStarting, 'isProcessing:', isProcessing);
+  const handleStartListening = async () => {
+    console.log('[VoiceForm] Start recording clicked');
 
-    if (isListening || isStarting || isProcessing) {
+    if (isRecording || isProcessing) {
       console.log('[VoiceForm] Skipping - already in progress');
       return;
     }
@@ -252,147 +294,104 @@ const VoiceFormComponent = ({ service, userEmail, language = 'en-IN', selectedLo
       return;
     }
 
-    console.log('[VoiceForm] Security check passed, setting isStarting to true and initializing recognition');
-    setIsStarting(true);
-
-    if (!recognitionRef.current) {
-      const recognition = initVoiceRecognition(
-        language,
-        (result: VoiceRecognitionResult) => {
-          if (result.transcript) {
-            if (result.isFinal) {
-              // Final result - send to backend for processing
-              setInterim('');
-              stopVoiceRecording(recognition);
-              setIsListening(false);
-
-              // Send transcription to backend
-              sendToBackend(result.transcript, currentField.id);
-            } else {
-              // Interim result - just show for now
-              setInterim(result.transcript);
-              setFormData((prev) => ({
-                ...prev,
-                [currentField.id]: result.transcript,
-              }));
-            }
-          }
-        },
-        (error: string) => {
-          if (error.includes('aborted')) return;
-          console.error('[Voice] UI Recognition error:', error);
-
-          // Reset recognition on network error so a fresh connection can be tried
-          if (error.includes('Network Error')) {
-            recognitionRef.current = null;
-            setVoiceError(
-              'Network Connection Lost: The voice service lost connection to the internet.\n\n' +
-              'This happens when Chrome\'s voice recognition server cannot be reached.\n\n' +
-              'Quick fixes:\n' +
-              '1. Check your internet connection\n' +
-              '2. Wait a moment and try again\n' +
-              '3. Refresh the page if the issue persists\n' +
-              '4. Or use Manual Input below instead'
-            );
-          } else if (error.includes('not-allowed')) {
-            setVoiceError(t.micAccessDenied);
-          } else if (error.includes('no-speech')) {
-            // Silence this error
-          } else {
-            setVoiceError(t.failedToProcess + ': ' + error);
-          }
-          setIsListening(false);
-          setIsStarting(false);
-        },
-        () => {
-          setIsListening(false);
-          setIsStarting(false);
-        },
-        () => {
-          setIsStarting(false);
-          setIsListening(true);
-        }
-      );
-
-      if (!recognition) {
-        setVoiceError(t.microphoneNotSupported);
-        setIsStarting(false);
-        return;
-      }
-      recognitionRef.current = recognition;
-    } else {
-      setRecognitionLanguage(recognitionRef.current, language);
-    }
-
-    try {
-      startVoiceRecording(recognitionRef.current);
-
-      // Add a timeout for voice service - if it doesn't start within 5 seconds, disable it
-      const voiceTimeout = setTimeout(() => {
-        if (isStarting) {
-          console.warn('[Voice] Timeout - voice service not responding');
-          setIsStarting(false);
-          setIsListening(false);
-          if (recognitionRef.current) {
-            try { abortVoiceRecording(recognitionRef.current); } catch (e) { }
-            recognitionRef.current = null;
-          }
-          setVoiceError(
-            '⏱️ Voice Service Timeout\n\n' +
-            'The voice recognition service is not responding.\n\n' +
-            t.pleaseTryAgain
-          );
-        }
-      }, 5000);
-
-      // Clear timeout if listening starts successfully
-      const originalOnStart = recognitionRef.current?.onstart;
-      recognitionRef.current.onstart = () => {
-        clearTimeout(voiceTimeout);
-        if (originalOnStart) originalOnStart();
-      };
-    } catch (err) {
-      console.error('Error starting voice recording:', err);
-      setVoiceError(t.couldNotStartMic);
-      setIsListening(false);
-      setIsStarting(false);
-    }
-  };
-
-  const handleStopListening = () => {
-    if (recognitionRef.current && isListening) {
+    // For Groq Whisper, we need to record audio first
+    if (useGroqWhisper) {
       try {
-        stopVoiceRecording(recognitionRef.current);
-      } catch (e) { }
-      setIsListening(false);
-      setInterim('');
-    }
-  };
+        console.log('[VoiceForm] Starting Groq Whisper audio recording');
+        await startRecording();
+      } catch (err: any) {
+        console.error('Error starting recording:', err);
+        if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+          setVoiceError(t.micAccessDenied);
+        } else {
+          setVoiceError(t.couldNotStartMic);
+        }
+      }
+    } else {
+      // Fallback to Web Speech API
+      if (!recognitionRef.current) {
+        const recognition = initVoiceRecognition(
+          language,
+          (result: VoiceRecognitionResult) => {
+            if (result.transcript) {
+              if (result.isFinal) {
+                setInterim('');
+                stopVoiceRecording(recognition);
 
-  const checkMicrophonePermission = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      stream.getTracks().forEach(track => track.stop());
-      setVoiceError(null);
-      handleStartListening();
-    } catch (err: any) {
-      console.error('Microphone hardware access error:', err);
-      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-        setVoiceError(t.micAccessDenied);
+                // Send transcription to backend
+                sendToBackend(result.transcript, currentField.id);
+              } else {
+                setInterim(result.transcript);
+                setFormData((prev) => ({
+                  ...prev,
+                  [currentField.id]: result.transcript,
+                }));
+              }
+            }
+          },
+          (error: string) => {
+            if (error.includes('aborted')) return;
+            console.error('[Voice] Recognition error:', error);
+
+            if (error.includes('Network Error')) {
+              recognitionRef.current = null;
+              setVoiceError(
+                'Network Connection Lost: The voice service lost connection to the internet.\n\n' +
+                'This happens when Chrome\'s voice recognition server cannot be reached.\n\n' +
+                'Quick fixes:\n' +
+                '1. Check your internet connection\n' +
+                '2. Wait a moment and try again\n' +
+                '3. Refresh the page if the issue persists\n' +
+                '4. Or use Manual Input below instead'
+              );
+            } else if (error.includes('not-allowed')) {
+              setVoiceError(t.micAccessDenied);
+            } else if (error.includes('no-speech')) {
+              // Silence this error
+            } else {
+              setVoiceError(t.failedToProcess + ': ' + error);
+            }
+          },
+          () => { },
+          () => { }
+        );
+
+        if (!recognition) {
+          setVoiceError(t.microphoneNotSupported);
+          return;
+        }
+        recognitionRef.current = recognition;
       } else {
+        setRecognitionLanguage(recognitionRef.current, language);
+      }
+
+      try {
+        startVoiceRecording(recognitionRef.current);
+      } catch (err) {
+        console.error('Error starting voice recording:', err);
         setVoiceError(t.couldNotStartMic);
       }
     }
   };
 
-  useEffect(() => {
-    if (recognitionRef.current) {
-      try { abortVoiceRecording(recognitionRef.current); } catch (e) { }
-      recognitionRef.current = null;
+  const handleStopListening = async () => {
+    if (useGroqWhisper) {
+      if (isRecording) {
+        console.log('[VoiceForm] Stopping Groq Whisper recording');
+        stopRecording();
+        setIsProcessing(true);
+        setShouldTranscribeBlob(true); // Flag to transcribe when blob is ready
+      }
+    } else {
+      // Stop Web Speech API
+      if (recognitionRef.current) {
+        try {
+          stopVoiceRecording(recognitionRef.current);
+        } catch (e) { }
+      }
+      setInterim('');
     }
-    setInterim('');
-    setIsListening(false);
-  }, [currentFieldIndex, language]);
+  };
 
   const handleNext = () => {
     // Check if current field is filled
@@ -674,7 +673,7 @@ const VoiceFormComponent = ({ service, userEmail, language = 'en-IN', selectedLo
                         console.log('[VoiceForm] File selected:', fileName);
                       }}
                       error={voiceError}
-                      isListening={isListening}
+                      isListening={isRecording}
                       onStartRecording={handleStartListening}
                       onStopRecording={handleStopListening}
                       voicePrompt={
@@ -695,12 +694,12 @@ const VoiceFormComponent = ({ service, userEmail, language = 'en-IN', selectedLo
                       />
                       {/* Voice Icon for Textarea */}
                       <button
-                        onClick={isListening ? handleStopListening : handleStartListening}
-                        disabled={isStarting}
+                        onClick={isRecording ? handleStopListening : handleStartListening}
+                        disabled={isProcessing}
                         className="absolute bottom-4 right-4 text-2xl hover:scale-110 transition-transform duration-200 active:scale-95 opacity-70 hover:opacity-100"
-                        title={isListening ? t.stopRecording : t.startVoiceInput}
+                        title={isRecording ? t.stopRecording : t.startVoiceInput}
                       >
-                        {isListening ? '⏹️' : '🎙️'}
+                        {isRecording ? '⏹️' : '🎙️'}
                       </button>
                     </div>
                   ) : (
@@ -722,12 +721,12 @@ const VoiceFormComponent = ({ service, userEmail, language = 'en-IN', selectedLo
                         />
                         {/* Voice Icon for Input */}
                         <button
-                          onClick={isListening ? handleStopListening : handleStartListening}
-                          disabled={isStarting}
+                          onClick={isRecording ? handleStopListening : handleStartListening}
+                          disabled={isProcessing}
                           className="absolute right-4 top-1/2 -translate-y-1/2 text-2xl hover:scale-110 transition-transform duration-200 active:scale-95 opacity-70 hover:opacity-100"
-                          title={isListening ? t.stopRecording : t.startVoiceInput}
+                          title={isRecording ? t.stopRecording : t.startVoiceInput}
                         >
-                          {isListening ? '⏹️' : '🎙️'}
+                          {isRecording ? '⏹️' : '🎙️'}
                         </button>
                       </div>
 
@@ -755,15 +754,27 @@ const VoiceFormComponent = ({ service, userEmail, language = 'en-IN', selectedLo
                   )}
 
                   {/* Voice Input Indicator */}
-                  {interim && (
+                  {(interim || isRecording || isProcessing) && (
                     <div className="absolute top-full left-0 right-0 mt-4 p-4 bg-neutral-900 rounded-xl border border-neutral-800 flex items-center gap-3 shadow-sm">
                       <div className="flex gap-1">
                         <span className="w-2 h-2 bg-cyan-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                         <span className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '200ms' }} />
                         <span className="w-2 h-2 bg-cyan-500 rounded-full animate-bounce" style={{ animationDelay: '400ms' }} />
                       </div>
-                      <p className="text-sm text-white font-medium flex-1">{t.listening} "{interim}"</p>
-                      <div className="text-xs text-neutral-400 font-medium">{t.voiceInput}</div>
+                      <div className="flex-1">
+                        {isRecording && (
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm text-cyan-400 font-medium">{t.listening}... 🎙️ {recordingTime}s</p>
+                          </div>
+                        )}
+                        {isProcessing && !isRecording && (
+                          <p className="text-sm text-purple-400 font-medium">Transcribing with Groq Whisper Large v3... ✨</p>
+                        )}
+                        {interim && !isRecording && (
+                          <p className="text-sm text-white font-medium">"{interim}"</p>
+                        )}
+                      </div>
+                      <div className="text-xs text-neutral-400 font-medium">{useGroqWhisper ? 'Groq Whisper' : 'Voice Input'}</div>
                     </div>
                   )}
                 </div>
