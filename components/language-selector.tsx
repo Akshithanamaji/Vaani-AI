@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Mic, Languages, Globe } from 'lucide-react';
@@ -36,9 +36,42 @@ interface LanguageSelectorProps {
 
 export function LanguageSelector({ isOpen, onClose, onLanguageSelect }: LanguageSelectorProps) {
   const [selectedLanguage, setSelectedLanguage] = useState<Language | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Stop audio when dialog closes or component unmounts
+  useEffect(() => {
+    if (!isOpen && audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+    };
+  }, [isOpen]);
 
   const handleLanguageSelect = (language: Language) => {
     setSelectedLanguage(language);
+
+    // Stop previous audio if it is playing
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+
+    // Play voice feedback in the selected language
+    // We use the tts-proxy to ensure it plays even if browser voices aren't available
+    try {
+      const text = language.nativeName;
+      const langCode = language.code;
+      const url = `/api/tts-proxy?text=${encodeURIComponent(text)}&lang=${langCode}`;
+      audioRef.current = new Audio(url);
+      audioRef.current.play().catch(e => console.warn('Failed to play language selection audio', e));
+    } catch (e) {
+      console.warn('Error creating audio for language selection', e);
+    }
   };
 
   const handleConfirm = () => {
@@ -67,11 +100,10 @@ export function LanguageSelector({ isOpen, onClose, onLanguageSelect }: Language
             <button
               key={language.code}
               onClick={() => handleLanguageSelect(language)}
-              className={`p-4 rounded-xl border-2 transition-all hover:shadow-lg ${
-                selectedLanguage?.code === language.code
-                  ? 'border-indigo-500 bg-indigo-50 shadow-md'
-                  : 'border-gray-200 hover:border-indigo-300 bg-white'
-              }`}
+              className={`p-4 rounded-xl border-2 transition-all hover:shadow-lg ${selectedLanguage?.code === language.code
+                ? 'border-indigo-500 bg-indigo-50 shadow-md'
+                : 'border-gray-200 hover:border-indigo-300 bg-white'
+                }`}
             >
               <div className="text-center">
                 <div className="text-3xl mb-2">{language.flag}</div>

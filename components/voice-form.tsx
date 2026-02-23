@@ -56,10 +56,10 @@ const VoiceFormComponent = ({ service, userEmail, language = 'en-IN', selectedLo
   const [backendResponse, setBackendResponse] = useState<string | null>(null);
   const [useGroqWhisper] = useState(true); // Use Groq Whisper by default
   const [shouldTranscribeBlob, setShouldTranscribeBlob] = useState(false);
-  
+
   // Audio recording with Groq Whisper
   const { isRecording, recordingTime, audioBlob, startRecording, stopRecording, resetRecording } = useAudioRecorder();
-  
+
   // Fallback to Web Speech API
   const recognitionRef = useRef<any | null>(null);
 
@@ -150,7 +150,7 @@ const VoiceFormComponent = ({ service, userEmail, language = 'en-IN', selectedLo
   useEffect(() => {
     if (shouldTranscribeBlob && audioBlob) {
       setShouldTranscribeBlob(false);
-      
+
       const transcribeNow = async () => {
         console.log('[VoiceForm] Transcribing with Groq Whisper, blob size:', audioBlob.size);
         const langCode = (language || 'en-IN').split('-')[0];
@@ -167,7 +167,7 @@ const VoiceFormComponent = ({ service, userEmail, language = 'en-IN', selectedLo
           setIsProcessing(false);
         }
       };
-      
+
       transcribeNow();
     }
   }, [shouldTranscribeBlob, audioBlob]);
@@ -202,7 +202,8 @@ const VoiceFormComponent = ({ service, userEmail, language = 'en-IN', selectedLo
       console.log('[VoiceForm] Backend response received:', JSON.stringify(result, null, 2));
 
       if (result.success) {
-        let transcriptToSave = transcript;
+        // Use the Gemini-formatted transcription from the backend if available
+        let transcriptToSave = (result as any).transcript || transcript;
 
         // CLIENT SIDE VALIDATION OVERRIDE
         if (currentField?.validation) {
@@ -286,13 +287,7 @@ const VoiceFormComponent = ({ service, userEmail, language = 'en-IN', selectedLo
     setVoiceError(null);
     setInterim('');
 
-    if (typeof window !== 'undefined' && !window.isSecureContext && window.location.hostname !== 'localhost') {
-      const isIP = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(window.location.hostname);
-      const errorMsg = t.securityError;
-      console.log('[VoiceForm] Security check failed:', errorMsg);
-      setVoiceError(errorMsg);
-      return;
-    }
+    // Removed isSecureContext check to allow LAN IP testing.
 
     // For Groq Whisper, we need to record audio first
     if (useGroqWhisper) {
@@ -322,10 +317,13 @@ const VoiceFormComponent = ({ service, userEmail, language = 'en-IN', selectedLo
                 sendToBackend(result.transcript, currentField.id);
               } else {
                 setInterim(result.transcript);
-                setFormData((prev) => ({
-                  ...prev,
-                  [currentField.id]: result.transcript,
-                }));
+                // Only set form data on interim if it isn't a date field (which strict-requires yyyy-mm-dd format in React)
+                if (currentField?.type !== 'date' && currentField?.type !== 'file' && currentField?.type !== 'email') {
+                  setFormData((prev) => ({
+                    ...prev,
+                    [currentField.id]: result.transcript,
+                  }));
+                }
               }
             }
           },
@@ -688,9 +686,8 @@ const VoiceFormComponent = ({ service, userEmail, language = 'en-IN', selectedLo
                       <Textarea
                         value={formData[currentField?.id] || ''}
                         onChange={(e) => setFormData(prev => ({ ...prev, [currentField.id]: e.target.value }))}
-                        placeholder={`${t.clickToSpeak} 🎙️`}
-                        readOnly
-                        className="text-lg min-h-[140px] border-2 border-neutral-800 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 rounded-xl px-6 py-5 transition-all duration-200 bg-neutral-900 text-white placeholder:text-neutral-500 shadow-sm hover:shadow-md resize-none cursor-not-allowed"
+                        placeholder={t.clickToSpeak ? `${t.clickToSpeak} 🎙️ or Type` : 'Speak or Type...'}
+                        className="text-lg min-h-[140px] border-2 border-neutral-800 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 rounded-xl px-6 py-5 transition-all duration-200 bg-neutral-900 text-white placeholder:text-neutral-500 shadow-sm hover:shadow-md resize-none"
                       />
                       {/* Voice Icon for Textarea */}
                       <button
@@ -709,14 +706,13 @@ const VoiceFormComponent = ({ service, userEmail, language = 'en-IN', selectedLo
                           type={currentField?.type || 'text'}
                           value={formData[currentField?.id] || ''}
                           onChange={(e) => setFormData(prev => ({ ...prev, [currentField.id]: e.target.value }))}
-                          placeholder={`${t.clickToSpeak} 🎙️`}
-                          readOnly={currentField?.type !== 'date'}
+                          placeholder={t.clickToSpeak ? `${t.clickToSpeak} 🎙️ or Type` : 'Speak or Type...'}
                           style={{ colorScheme: 'dark' }}
                           className={
                             `text-lg h-16 border-2 rounded-xl px-6 pr-16 transition-all duration-200 shadow-sm hover:shadow-md text-white placeholder:text-neutral-500 ` +
                             (currentField?.type === 'date'
                               ? 'border-neutral-800 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 bg-neutral-900 cursor-pointer'
-                              : 'border-neutral-800 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 bg-neutral-900 cursor-not-allowed')
+                              : 'border-neutral-800 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 bg-neutral-900')
                           }
                         />
                         {/* Voice Icon for Input */}
