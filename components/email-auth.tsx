@@ -119,7 +119,7 @@ export function EmailAuth({ onAuthSuccess, language }: EmailAuthProps) {
     return () => {
       if (recognitionRef.current) {
         import('@/lib/voice-utils').then(({ stopVoiceRecording }) => {
-          try { stopVoiceRecording(recognitionRef.current); } catch (e) {}
+          try { stopVoiceRecording(recognitionRef.current); } catch (e) { }
         });
       }
       import('@/lib/voice-utils').then(({ stopSpeaking }) => stopSpeaking());
@@ -146,7 +146,7 @@ export function EmailAuth({ onAuthSuccess, language }: EmailAuthProps) {
     // Toggle off if already listening to same field
     if (isListening && activeField === field) {
       if (recognitionRef.current) {
-        try { stopVoiceRecording(recognitionRef.current); } catch (e) {}
+        try { stopVoiceRecording(recognitionRef.current); } catch (e) { }
         recognitionRef.current = null;
       }
       setIsListening(false);
@@ -157,14 +157,15 @@ export function EmailAuth({ onAuthSuccess, language }: EmailAuthProps) {
 
     // Stop any previous recognition
     if (recognitionRef.current) {
-      try { stopVoiceRecording(recognitionRef.current); } catch (e) {}
+      try { stopVoiceRecording(recognitionRef.current); } catch (e) { }
       recognitionRef.current = null;
     }
 
-    // Speak the field prompt then start listening
+    // Speak the field prompt but DO NOT await it.
+    // Awaiting it takes several seconds, causing the browser to revoke the user-gesture token,
+    // which secretly blocks the microphone from starting (NotAllowedError).
     const prompt = fieldVoicePrompts[field]?.[langCode] || fieldVoicePrompts[field]?.['en'];
-    setVoiceStatus(prompt);
-    await speakText(prompt, bcp47);
+    speakText(prompt, bcp47).catch(e => console.warn(e));
 
     setActiveField(field);
     setIsListening(true);
@@ -172,13 +173,43 @@ export function EmailAuth({ onAuthSuccess, language }: EmailAuthProps) {
 
     const recognition = initVoiceRecognition(
       bcp47,
-      (result) => {
+      async (result) => {
         if (result.transcript) {
           const text = result.transcript.trim();
-          if (field === 'name') setName(text);
-          else if (field === 'phone') setPhone(text);
-          else if (field === 'email') setEmail(text);
-          if (result.isFinal) setVoiceStatus('');
+
+          // Interim results: show exactly what the user is saying live
+          if (!result.isFinal) {
+            if (field === 'name') setName(text);
+            else if (field === 'phone') setPhone(text);
+            else if (field === 'email') setEmail(text);
+          } else {
+            // Final Result: Call Gemini API to parse and format it cleanly
+            setVoiceStatus('Formatting...');
+            try {
+              const response = await fetch('/api/voice-process', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  transcript: text,
+                  language: bcp47,
+                  fieldName: field,
+                  context: {}
+                })
+              });
+              const data = await response.json();
+              const formattedText = data.success && data.transcript ? data.transcript : text;
+
+              if (field === 'name') setName(formattedText);
+              else if (field === 'phone') setPhone(formattedText);
+              else if (field === 'email') setEmail(formattedText);
+            } catch (e) {
+              // Fallback
+              if (field === 'name') setName(text);
+              else if (field === 'phone') setPhone(text);
+              else if (field === 'email') setEmail(text);
+            }
+            setVoiceStatus('');
+          }
         }
       },
       (err) => {
@@ -223,11 +254,7 @@ export function EmailAuth({ onAuthSuccess, language }: EmailAuthProps) {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="flex justify-center mb-6">
-            <div className="flex items-center justify-center h-16 w-16 rounded-2xl bg-gradient-to-br from-cyan-500 to-purple-600 shadow-xl transition-transform hover:scale-105">
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-white">
-                <path d="M12 4.5C11 6.5 7 11.5 3 13C6 13 8 13.5 10 16C11 18.5 10 21 10 21C12 19 13 18 14 19C15 21 14 21 14 21C14 21 13 18.5 14 16C16 13.5 18 13 21 13C17 11.5 13 6.5 12 4.5Z" fill="currentColor" />
-              </svg>
-            </div>
+            <img src="/logo.jpeg" alt="Logo" className="h-24 w-24 rounded-3xl object-cover shadow-xl transition-transform hover:scale-105 border border-white/10" />
           </div>
           <h1 className="text-4xl font-black mb-2 tracking-tighter bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">Vaani Ai</h1>
           <p className="text-neutral-400 font-bold uppercase tracking-[0.2em] text-[10px]">Digital India Voice Portal</p>
@@ -244,11 +271,10 @@ export function EmailAuth({ onAuthSuccess, language }: EmailAuthProps) {
           <div className="mt-4">
             <button
               onClick={handleListenInstructions}
-              className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all ${
-                isSpeaking
-                  ? 'bg-cyan-500/20 border border-cyan-500 text-cyan-400 animate-pulse'
-                  : 'bg-neutral-800 border border-neutral-700 text-neutral-400 hover:border-cyan-500/50 hover:text-cyan-400'
-              }`}
+              className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all ${isSpeaking
+                ? 'bg-cyan-500/20 border border-cyan-500 text-cyan-400 animate-pulse'
+                : 'bg-neutral-800 border border-neutral-700 text-neutral-400 hover:border-cyan-500/50 hover:text-cyan-400'
+                }`}
             >
               {isSpeaking ? (
                 <><VolumeX size={13} />{stopLabel[langCode] || 'Stop'}</>
@@ -285,22 +311,20 @@ export function EmailAuth({ onAuthSuccess, language }: EmailAuthProps) {
                     value={name}
                     onChange={(e) => { setName(e.target.value); setError(''); }}
                     disabled={loading}
-                    className={`bg-neutral-900 h-12 text-white border-2 rounded-2xl transition-all placeholder:text-neutral-500 ${
-                      activeField === 'name'
-                        ? 'border-cyan-500 ring-4 ring-cyan-500/20'
-                        : 'border-neutral-800 focus:border-cyan-500/50 focus:ring-4 focus:ring-cyan-500/10'
-                    }`}
+                    className={`bg-neutral-900 h-12 text-white border-2 rounded-2xl transition-all placeholder:text-neutral-500 ${activeField === 'name'
+                      ? 'border-cyan-500 ring-4 ring-cyan-500/20'
+                      : 'border-neutral-800 focus:border-cyan-500/50 focus:ring-4 focus:ring-cyan-500/10'
+                      }`}
                   />
                   <button
                     type="button"
                     onClick={() => startVoiceInput('name')}
                     disabled={loading}
                     title={activeField === 'name' && isListening ? 'Stop listening' : 'Speak your name'}
-                    className={`flex-shrink-0 w-12 h-12 rounded-2xl flex items-center justify-center transition-all border ${
-                      activeField === 'name' && isListening
-                        ? 'bg-red-500 border-red-500 text-white animate-pulse shadow-lg shadow-red-500/30'
-                        : 'bg-neutral-800 border-neutral-700 text-neutral-400 hover:bg-cyan-500/20 hover:text-cyan-400 hover:border-cyan-500/50'
-                    }`}
+                    className={`flex-shrink-0 w-12 h-12 rounded-2xl flex items-center justify-center transition-all border ${activeField === 'name' && isListening
+                      ? 'bg-red-500 border-red-500 text-white animate-pulse shadow-lg shadow-red-500/30'
+                      : 'bg-neutral-800 border-neutral-700 text-neutral-400 hover:bg-cyan-500/20 hover:text-cyan-400 hover:border-cyan-500/50'
+                      }`}
                   >
                     {activeField === 'name' && isListening ? <MicOff size={16} /> : <Mic size={16} />}
                   </button>
@@ -320,22 +344,20 @@ export function EmailAuth({ onAuthSuccess, language }: EmailAuthProps) {
                     value={phone}
                     onChange={(e) => { setPhone(e.target.value); setError(''); }}
                     disabled={loading}
-                    className={`bg-neutral-900 h-12 text-white border-2 rounded-2xl transition-all placeholder:text-neutral-500 ${
-                      activeField === 'phone'
-                        ? 'border-cyan-500 ring-4 ring-cyan-500/20'
-                        : 'border-neutral-800 focus:border-cyan-500/50 focus:ring-4 focus:ring-cyan-500/10'
-                    }`}
+                    className={`bg-neutral-900 h-12 text-white border-2 rounded-2xl transition-all placeholder:text-neutral-500 ${activeField === 'phone'
+                      ? 'border-cyan-500 ring-4 ring-cyan-500/20'
+                      : 'border-neutral-800 focus:border-cyan-500/50 focus:ring-4 focus:ring-cyan-500/10'
+                      }`}
                   />
                   <button
                     type="button"
                     onClick={() => startVoiceInput('phone')}
                     disabled={loading}
                     title={activeField === 'phone' && isListening ? 'Stop listening' : 'Speak your phone number'}
-                    className={`flex-shrink-0 w-12 h-12 rounded-2xl flex items-center justify-center transition-all border ${
-                      activeField === 'phone' && isListening
-                        ? 'bg-red-500 border-red-500 text-white animate-pulse shadow-lg shadow-red-500/30'
-                        : 'bg-neutral-800 border-neutral-700 text-neutral-400 hover:bg-cyan-500/20 hover:text-cyan-400 hover:border-cyan-500/50'
-                    }`}
+                    className={`flex-shrink-0 w-12 h-12 rounded-2xl flex items-center justify-center transition-all border ${activeField === 'phone' && isListening
+                      ? 'bg-red-500 border-red-500 text-white animate-pulse shadow-lg shadow-red-500/30'
+                      : 'bg-neutral-800 border-neutral-700 text-neutral-400 hover:bg-cyan-500/20 hover:text-cyan-400 hover:border-cyan-500/50'
+                      }`}
                   >
                     {activeField === 'phone' && isListening ? <MicOff size={16} /> : <Mic size={16} />}
                   </button>
@@ -355,22 +377,20 @@ export function EmailAuth({ onAuthSuccess, language }: EmailAuthProps) {
                     value={email}
                     onChange={(e) => { setEmail(e.target.value); setError(''); }}
                     disabled={loading}
-                    className={`bg-neutral-900 h-12 text-white border-2 rounded-2xl transition-all placeholder:text-neutral-500 ${
-                      activeField === 'email'
-                        ? 'border-cyan-500 ring-4 ring-cyan-500/20'
-                        : 'border-neutral-800 focus:border-cyan-500/50 focus:ring-4 focus:ring-cyan-500/10'
-                    }`}
+                    className={`bg-neutral-900 h-12 text-white border-2 rounded-2xl transition-all placeholder:text-neutral-500 ${activeField === 'email'
+                      ? 'border-cyan-500 ring-4 ring-cyan-500/20'
+                      : 'border-neutral-800 focus:border-cyan-500/50 focus:ring-4 focus:ring-cyan-500/10'
+                      }`}
                   />
                   <button
                     type="button"
                     onClick={() => startVoiceInput('email')}
                     disabled={loading}
                     title={activeField === 'email' && isListening ? 'Stop listening' : 'Speak your email'}
-                    className={`flex-shrink-0 w-12 h-12 rounded-2xl flex items-center justify-center transition-all border ${
-                      activeField === 'email' && isListening
-                        ? 'bg-red-500 border-red-500 text-white animate-pulse shadow-lg shadow-red-500/30'
-                        : 'bg-neutral-800 border-neutral-700 text-neutral-400 hover:bg-cyan-500/20 hover:text-cyan-400 hover:border-cyan-500/50'
-                    }`}
+                    className={`flex-shrink-0 w-12 h-12 rounded-2xl flex items-center justify-center transition-all border ${activeField === 'email' && isListening
+                      ? 'bg-red-500 border-red-500 text-white animate-pulse shadow-lg shadow-red-500/30'
+                      : 'bg-neutral-800 border-neutral-700 text-neutral-400 hover:bg-cyan-500/20 hover:text-cyan-400 hover:border-cyan-500/50'
+                      }`}
                   >
                     {activeField === 'email' && isListening ? <MicOff size={16} /> : <Mic size={16} />}
                   </button>

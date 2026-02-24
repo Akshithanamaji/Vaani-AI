@@ -703,9 +703,12 @@ export function LandingPage({ onGetStarted, onStartSpeaking, selectedLanguage }:
   const stopAudio = () => {
     if (audioRef.current) {
       try {
+        currentLangIndex.current = 999; // Break out of the language playing sequence
+        setIsPlayingInstructionSync(false);
         audioRef.current.pause();
         audioRef.current.currentTime = 0;
-        audioRef.current.src = '';
+        audioRef.current.removeAttribute('src');
+        audioRef.current.load();
       } catch {
         // Ignore errors during stop
       }
@@ -718,7 +721,7 @@ export function LandingPage({ onGetStarted, onStartSpeaking, selectedLanguage }:
     if (isPlayingInstructionRef.current) return;
     setIsPlayingInstructionSync(true);
 
-    const languages = ['en', 'hi', 'te', 'ta', 'kn', 'ml', 'mr', 'bn', 'gu', 'pa', 'or', 'ur'];
+    const languages = ['en', 'hi']; // Limit to English and Hindi to prevent long sequential loops
     currentLangIndex.current = 0;
 
     const playNextLanguage = async () => {
@@ -729,6 +732,12 @@ export function LandingPage({ onGetStarted, onStartSpeaking, selectedLanguage }:
 
       const lang = languages[currentLangIndex.current];
       const text = voiceInstructions[lang];
+      if (!text) {
+        console.warn(`No voice instruction found for language: ${lang}`);
+        currentLangIndex.current++;
+        playNextLanguage();
+        return;
+      }
 
       try {
         const response = await fetch(`/api/tts-proxy?text=${encodeURIComponent(text)}&lang=${lang}`);
@@ -753,15 +762,17 @@ export function LandingPage({ onGetStarted, onStartSpeaking, selectedLanguage }:
 
           try {
             await audioRef.current.play();
-          } catch {
-            // Silently ignore autoplay/abort errors — audio is optional UX
+          } catch (err) {
+            console.warn(`Audio play error for language ${lang}:`, err);
             handleCompletion();
           }
         } else {
+          console.warn(`TTS fetch failed for language ${lang}:`, response.status);
           currentLangIndex.current++;
           playNextLanguage();
         }
-      } catch {
+      } catch (err) {
+        console.warn(`TTS fetch exception for language ${lang}:`, err);
         currentLangIndex.current++;
         playNextLanguage();
       }
@@ -773,20 +784,20 @@ export function LandingPage({ onGetStarted, onStartSpeaking, selectedLanguage }:
   // Play language confirmation message when language is selected
   const playLanguageConfirmation = async (selectedLang: Language) => {
     if (!selectedLang || isPlayingInstructionRef.current) return;
-    
+
     // Only play if language has changed
     if (lastPlayedLanguageCode === selectedLang.code) {
       return;
     }
-    
+
     setLastPlayedLanguageCode(selectedLang.code);
-    
+
     try {
       // Get the confirmation message in the user's selected language
-      const confirmationText = languageConfirmationMessages[selectedLang.code]?.[selectedLang.code] || 
-                               languageConfirmationMessages['en']?.[selectedLang.code] || 
-                               `You have selected ${selectedLang.name}`;
-      
+      const confirmationText = languageConfirmationMessages[selectedLang.code]?.[selectedLang.code] ||
+        languageConfirmationMessages['en']?.[selectedLang.code] ||
+        `You have selected ${selectedLang.name}`;
+
       const response = await fetch(`/api/tts-proxy?text=${encodeURIComponent(confirmationText)}&lang=${selectedLang.code}`);
       if (response.ok) {
         const blob = await response.blob();
@@ -825,12 +836,13 @@ export function LandingPage({ onGetStarted, onStartSpeaking, selectedLanguage }:
     if (!selectedLanguage || isPlayingInstructionRef.current) return;
     if (!userHasInteracted.current) return;
     playLanguageConfirmation(selectedLanguage);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedLanguage?.code]);
 
   // Block Get Started if no language selected
   const handleStartSpeakingClick = () => {
     userHasInteracted.current = true;
+    stopAudio();
     onStartSpeaking();
   };
 
@@ -1041,5 +1053,3 @@ export function LandingPage({ onGetStarted, onStartSpeaking, selectedLanguage }:
     </div>
   );
 }
-
-
