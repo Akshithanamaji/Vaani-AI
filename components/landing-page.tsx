@@ -718,7 +718,7 @@ export function LandingPage({ onGetStarted, onStartSpeaking, selectedLanguage }:
     if (isPlayingInstructionRef.current) return;
     setIsPlayingInstructionSync(true);
 
-    const languages = Object.keys(voiceInstructions);
+    const languages = ['en', 'hi', 'te', 'ta', 'kn', 'ml', 'mr', 'bn', 'gu', 'pa', 'or', 'ur'];
     currentLangIndex.current = 0;
 
     const playNextLanguage = async () => {
@@ -729,12 +729,6 @@ export function LandingPage({ onGetStarted, onStartSpeaking, selectedLanguage }:
 
       const lang = languages[currentLangIndex.current];
       const text = voiceInstructions[lang];
-      if (!text) {
-        console.warn(`No voice instruction found for language: ${lang}`);
-        currentLangIndex.current++;
-        playNextLanguage();
-        return;
-      }
 
       try {
         const response = await fetch(`/api/tts-proxy?text=${encodeURIComponent(text)}&lang=${lang}`);
@@ -759,17 +753,15 @@ export function LandingPage({ onGetStarted, onStartSpeaking, selectedLanguage }:
 
           try {
             await audioRef.current.play();
-          } catch (err) {
-            console.warn(`Audio play error for language ${lang}:`, err);
+          } catch {
+            // Silently ignore autoplay/abort errors — audio is optional UX
             handleCompletion();
           }
         } else {
-          console.warn(`TTS fetch failed for language ${lang}:`, response.status);
           currentLangIndex.current++;
           playNextLanguage();
         }
-      } catch (err) {
-        console.warn(`TTS fetch exception for language ${lang}:`, err);
+      } catch {
         currentLangIndex.current++;
         playNextLanguage();
       }
