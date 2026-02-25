@@ -306,7 +306,7 @@ export const AdminDashboard = ({ restrictedServiceId, serviceName, adminState, a
   const handleStatusUpdate = async (submissionId: string, newStatus: string, notes?: string) => {
     try {
       console.log('[AdminDashboard] Updating status to:', newStatus, 'for submission:', submissionId);
-      
+
       const response = await fetch(`/api/submissions/${submissionId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -321,7 +321,7 @@ export const AdminDashboard = ({ restrictedServiceId, serviceName, adminState, a
       console.log('[AdminDashboard] Response status:', response.status);
 
       const data = await response.json();
-      
+
       if (!response.ok) {
         console.error('[AdminDashboard] API Error:', response.status, data);
         const errorMsg = data.error || 'Failed to update status';
@@ -332,14 +332,14 @@ export const AdminDashboard = ({ restrictedServiceId, serviceName, adminState, a
 
       if (data.success) {
         console.log('[AdminDashboard] Status update successful');
-        
+
         // Update local state immediately
-        setSubmissions(prev => prev.map(sub => 
-          sub.id === submissionId 
+        setSubmissions(prev => prev.map(sub =>
+          sub.id === submissionId
             ? { ...sub, status: newStatus as any, statusLabel: data.submission.statusLabel, isExpired: data.submission.isExpired }
             : sub
         ));
-        
+
         if (selectedSubmission?.id === submissionId) {
           setSelectedSubmission(prev => prev ? {
             ...prev,
@@ -349,7 +349,7 @@ export const AdminDashboard = ({ restrictedServiceId, serviceName, adminState, a
             isExpired: data.submission.isExpired
           } : null);
         }
-        
+
         // Show toast with notification confirmation
         const userEmail = selectedSubmission?.userDetails.email || selectedSubmission?.userDetails.userEmail || 'user';
         const statusMessages: Record<string, string> = {
@@ -360,14 +360,14 @@ export const AdminDashboard = ({ restrictedServiceId, serviceName, adminState, a
           'rejected': '❌ Application rejected & notification sent',
           'collected': '✓ Marked as collected',
         };
-        
+
         const toastMsg = statusMessages[newStatus] || `Status updated to ${newStatus}`;
         setToast({ show: true, msg: `${toastMsg} • User notified`, user: userEmail });
         setTimeout(() => setToast(null), 4000);
-        
+
         return true;
       }
-      
+
       console.error('[AdminDashboard] Status update returned false:', data);
       setToast({ show: true, msg: '❌ Status update failed', user: 'Error' });
       setTimeout(() => setToast(null), 4000);
@@ -439,7 +439,7 @@ export const AdminDashboard = ({ restrictedServiceId, serviceName, adminState, a
         <div className="p-4 bg-gray-50 border-b border-gray-100">
           <div className="flex flex-wrap gap-3 items-center">
             <span className="text-sm font-bold text-gray-700">Actions:</span>
-            
+
             {/* Workflow-based buttons - show only relevant next steps */}
             {currentStatus === 'submitted' && (
               <Button
@@ -458,7 +458,7 @@ export const AdminDashboard = ({ restrictedServiceId, serviceName, adminState, a
                 👁️ Start Review
               </Button>
             )}
-            
+
             {currentStatus === 'under_review' && (
               <Button
                 size="sm"
@@ -476,7 +476,7 @@ export const AdminDashboard = ({ restrictedServiceId, serviceName, adminState, a
                 ⚙️ Start Processing
               </Button>
             )}
-            
+
             {currentStatus === 'processing' && (
               <Button
                 size="sm"
@@ -494,7 +494,7 @@ export const AdminDashboard = ({ restrictedServiceId, serviceName, adminState, a
                 ✅ Mark Complete
               </Button>
             )}
-            
+
             {currentStatus === 'completed' && (
               <Button
                 size="sm"
@@ -512,7 +512,7 @@ export const AdminDashboard = ({ restrictedServiceId, serviceName, adminState, a
                 📦 Ready for Collection
               </Button>
             )}
-            
+
             {/* Reject button - available except for final states */}
             {!['ready_for_collection', 'rejected'].includes(currentStatus) && (
               <Button
@@ -535,7 +535,7 @@ export const AdminDashboard = ({ restrictedServiceId, serviceName, adminState, a
                 ❌ Reject
               </Button>
             )}
-            
+
             {/* Final state indicators */}
             {currentStatus === 'ready_for_collection' && (
               <span className="px-3 py-1 bg-emerald-200 text-emerald-700 rounded-full text-xs font-bold">
@@ -548,7 +548,7 @@ export const AdminDashboard = ({ restrictedServiceId, serviceName, adminState, a
               </span>
             )}
           </div>
-          
+
           {/* Current status indicator */}
           <div className="mt-3 flex items-center gap-2 text-xs text-gray-500">
             <span>Current:</span>
@@ -652,7 +652,7 @@ export const AdminDashboard = ({ restrictedServiceId, serviceName, adminState, a
                 </div>
               )}
             </div>
-            
+
             {/* Document Card Preview - Shows for Completed and Ready for Collection */}
             <DocumentCard
               serviceId={selectedSubmission.serviceId}
@@ -682,8 +682,8 @@ export const AdminDashboard = ({ restrictedServiceId, serviceName, adminState, a
                 {statusConfig.label}
               </div>
               <p className="text-xs text-gray-500 mt-2">
-                {currentStatus === 'ready_for_collection' || currentStatus === 'rejected' 
-                  ? 'QR Code is no longer valid' 
+                {currentStatus === 'ready_for_collection' || currentStatus === 'rejected'
+                  ? 'QR Code is no longer valid'
                   : 'QR Code is active'}
               </p>
             </div>
@@ -749,7 +749,7 @@ export const AdminDashboard = ({ restrictedServiceId, serviceName, adminState, a
                     completed: 'ready_for_collection'
                   };
                   const nextStatus = statusWorkflow[currentStatus] || 'under_review';
-                  
+
                   try {
                     // First save any changes
                     if (Object.keys(editDetails).length > 0) {
@@ -764,23 +764,23 @@ export const AdminDashboard = ({ restrictedServiceId, serviceName, adminState, a
                         }),
                       });
                     }
-                    
+
                     // Then update status
                     const statusUpdateSuccess = await handleStatusUpdate(selectedSubmission.id, nextStatus);
-                    
+
                     if (statusUpdateSuccess) {
                       // Close detail view
                       setSelectedSubmission(null);
-                      
+
                       // Reload all submissions from backend
                       await loadSubmissions();
-                      
+
                       // Small delay to ensure state updates
                       await new Promise(resolve => setTimeout(resolve, 300));
-                      
+
                       // Switch to the new status section
                       setActiveSection(nextStatus as any);
-                      
+
                       console.log('[AdminDashboard] Status updated to:', nextStatus, 'activeSection set to:', nextStatus);
                     } else {
                       console.error('[AdminDashboard] Status update failed');
@@ -809,12 +809,11 @@ export const AdminDashboard = ({ restrictedServiceId, serviceName, adminState, a
                 )}
               </Button>
             )}
-            
+
             {/* Final state message */}
             {(currentStatus === 'ready_for_collection' || currentStatus === 'rejected') && (
-              <div className={`w-full h-14 rounded-xl shadow-lg font-bold flex items-center justify-center gap-2 ${
-                currentStatus === 'ready_for_collection' ? 'bg-emerald-200 text-emerald-700' : 'bg-red-100 text-red-600'
-              }`}>
+              <div className={`w-full h-14 rounded-xl shadow-lg font-bold flex items-center justify-center gap-2 ${currentStatus === 'ready_for_collection' ? 'bg-emerald-200 text-emerald-700' : 'bg-red-100 text-red-600'
+                }`}>
                 {currentStatus === 'ready_for_collection' ? '✓ Ready for Collection - User Notified' : '✗ Application Rejected'}
               </div>
             )}
@@ -900,9 +899,8 @@ export const AdminDashboard = ({ restrictedServiceId, serviceName, adminState, a
           </p>
           <button
             onClick={() => setScanMode(!scanMode)}
-            className={`w-full flex items-center gap-3 ${sidebarCollapsed ? 'justify-center px-2' : 'px-4'} py-3 rounded-xl transition-all ${
-              scanMode ? 'bg-red-500 text-white' : 'text-gray-300 hover:bg-gray-800'
-            }`}
+            className={`w-full flex items-center gap-3 ${sidebarCollapsed ? 'justify-center px-2' : 'px-4'} py-3 rounded-xl transition-all ${scanMode ? 'bg-red-500 text-white' : 'text-gray-300 hover:bg-gray-800'
+              }`}
           >
             <span className="text-lg">{scanMode ? '✕' : '📷'}</span>
             {!sidebarCollapsed && <span className="font-semibold text-sm">{scanMode ? 'Close Scanner' : 'Scan QR Code'}</span>}
@@ -938,6 +936,22 @@ export const AdminDashboard = ({ restrictedServiceId, serviceName, adminState, a
             </div>
           )}
         </nav>
+
+        {/* Logout at bottom of sidebar */}
+        {onLogout && (
+          <div className="p-3 border-t border-gray-800">
+            <button
+              onClick={onLogout}
+              className={`w-full flex items-center gap-3 ${sidebarCollapsed ? 'justify-center px-2' : 'px-4'} py-3 rounded-xl transition-all text-red-400 hover:bg-red-500/10 hover:text-red-300`}
+              title="Logout"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1" />
+              </svg>
+              {!sidebarCollapsed && <span className="font-semibold text-sm">Logout</span>}
+            </button>
+          </div>
+        )}
       </aside>
 
       {/* Main Content */}
@@ -984,6 +998,18 @@ export const AdminDashboard = ({ restrictedServiceId, serviceName, adminState, a
                 </div>
               )}
             </div>
+            {onLogout && (
+              <button
+                onClick={onLogout}
+                className="flex items-center gap-2 px-4 py-2 ml-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 hover:text-red-300 font-semibold text-sm transition-all duration-200"
+                title="Logout"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1" />
+                </svg>
+                <span className="hidden md:inline">Logout</span>
+              </button>
+            )}
           </div>
         </header>
 
@@ -997,9 +1023,8 @@ export const AdminDashboard = ({ restrictedServiceId, serviceName, adminState, a
                 <button
                   key={key}
                   onClick={() => setActiveSection(key as any)}
-                  className={`bg-white rounded-xl p-5 border-t-4 ${config.borderColor} hover:shadow-lg transition-all text-left ${
-                    activeSection === key ? 'ring-2 ring-cyan-500 shadow-lg' : ''
-                  }`}
+                  className={`bg-white rounded-xl p-5 border-t-4 ${config.borderColor} hover:shadow-lg transition-all text-left ${activeSection === key ? 'ring-2 ring-cyan-500 shadow-lg' : ''
+                    }`}
                 >
                   <div className="flex items-start justify-between">
                     <div>
@@ -1047,7 +1072,7 @@ export const AdminDashboard = ({ restrictedServiceId, serviceName, adminState, a
                 </div>
               </div>
             </div>
-            
+
             {/* Table */}
             <div className="overflow-x-auto">
               <table className="w-full">

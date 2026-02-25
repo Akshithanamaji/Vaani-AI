@@ -82,6 +82,7 @@ export interface TranslationKeys {
     stopRecording: string;
     startVoiceInput: string;
     listening: string;
+    processing: string;
     voiceInput: string;
     previous: string;
     nextQuestion: string;
@@ -182,6 +183,7 @@ export const translations: Record<string, TranslationKeys> = {
         stopRecording: 'Stop recording',
         startVoiceInput: 'Start voice input',
         listening: 'Listening...',
+        processing: 'Processing your voice...',
         voiceInput: 'Voice input',
         previous: 'Previous',
         nextQuestion: 'Next question',
@@ -280,6 +282,7 @@ export const translations: Record<string, TranslationKeys> = {
         stopRecording: 'रिकॉर्डिंग बंद करें',
         startVoiceInput: 'वॉयस इनपुट आरंभ करें',
         listening: 'सुन रहे हैं...',
+        processing: 'आपकी आवाज़ प्रोसेस हो रही है...',
         voiceInput: 'वॉयस इनपुट',
         previous: 'पिछला',
         nextQuestion: 'अगला प्रश्न',
@@ -378,6 +381,7 @@ export const translations: Record<string, TranslationKeys> = {
         stopRecording: 'రికార్డింగ్ ఆపండి',
         startVoiceInput: 'వాయిస్ ఇన్‌పుట్ ప్రారంభించండి',
         listening: 'వింటున్నాము...',
+        processing: 'మీ వాయిస్ ప్రాసెస్ అవుతోంది...',
         voiceInput: 'వాయిస్ ఇన్‌పుట్',
         previous: 'మునుపటిది',
         nextQuestion: 'తదుపరి ప్రశ్న',
@@ -476,6 +480,7 @@ export const translations: Record<string, TranslationKeys> = {
         stopRecording: 'ರೆಕಾರ್ಡಿಂಗ್ ನಿಲ್ಲಿಸಿ',
         startVoiceInput: 'ಧ್ವನಿ ಇನ್‌ಪುಟ್ ಪ್ರಾರಂಭಿಸಿ',
         listening: 'ಆಲಿಸುತ್ತಿದ್ದೇವೆ...',
+        processing: 'ನಿಮ್ಮ ಧ್ವನಿ ಪ್ರಕ್ರಿಯೆಗೊಳ್ಳುತ್ತಿದೆ...',
         voiceInput: 'ಧ್ವನಿ ಇನ್‌ಪುಟ್',
         previous: 'ಹಿಂದಿನದು',
         nextQuestion: 'ಮುಂದಿನ ಪ್ರಶ್ನೆ',
@@ -574,6 +579,7 @@ export const translations: Record<string, TranslationKeys> = {
         stopRecording: 'பதிவை நிறுத்தவும்',
         startVoiceInput: 'குரல் உள்ளீட்டைத் தொடங்கவும்',
         listening: 'கேட்கிறோம்...',
+        processing: 'உங்கள் குரல் செயலாக்கப்படுகிறது...',
         voiceInput: 'குரல் உள்ளீடு',
         previous: 'முந்தையது',
         nextQuestion: 'அடுத்த கேள்வி',
@@ -672,6 +678,7 @@ export const translations: Record<string, TranslationKeys> = {
         stopRecording: 'റെക്കോർഡിംഗ് നിർത്തുക',
         startVoiceInput: 'വോയ്‌സ് ഇൻപുട്ട് ആരംഭിക്കുക',
         listening: 'കേൾക്കുന്നു...',
+        processing: 'നിങ്ങളുടെ ശബ്ദം പ്രോസസ്സ് ചെയ്യുന്നു...',
         voiceInput: 'വോയ്‌സ് ഇൻപുട്ട്',
         previous: 'മുമ്പത്തേത്',
         nextQuestion: 'അടുത്ത ചോദ്യം',
@@ -770,6 +777,7 @@ export const translations: Record<string, TranslationKeys> = {
         stopRecording: 'रेकॉर्डिंग थांबवा',
         startVoiceInput: 'व्हॉइस इनपुट सुरू करा',
         listening: 'ऐकत आहे...',
+        processing: 'तुमचा आवाज प्रक्रिया होत आहे...',
         voiceInput: 'व्हॉइस इनपुट',
         previous: 'मागील',
         nextQuestion: 'पुढील प्रश्न',
@@ -868,6 +876,7 @@ export const translations: Record<string, TranslationKeys> = {
         stopRecording: 'রেকর্ডিং বন্ধ করুন',
         startVoiceInput: 'ভয়েস ইনপুট শুরু করুন',
         listening: 'শুনছি...',
+        processing: 'আপনার কণ্ঠস্বর প্রক্রিয়া হচ্ছে...',
         voiceInput: 'ভয়েস ইনপুট',
         previous: 'পূর্ববর্তী',
         nextQuestion: 'পরবর্তী প্রশ্ন',
@@ -966,6 +975,7 @@ export const translations: Record<string, TranslationKeys> = {
         stopRecording: 'રેકોર્ડિંગ બંધ કરો',
         startVoiceInput: 'વૉઇસ ઇનપુટ શરૂ કરો',
         listening: 'સાંભળી રહ્યા છીએ...',
+        processing: 'તમારો અવાજ પ્રક્રિયા થઈ રહ્યો છે...',
         voiceInput: 'વૉઇસ ઇનપુટ',
         previous: 'પાછળું',
         nextQuestion: 'આગળો પ્રશ્ન',
@@ -1064,6 +1074,7 @@ export const translations: Record<string, TranslationKeys> = {
         stopRecording: 'ରେକର୍ଡିଂ ବନ୍ଦ କରନ୍ତୁ',
         startVoiceInput: 'ଭଏସ୍ ଇନପୁଟ୍ ଆରମ୍ଭ କରନ୍ତୁ',
         listening: 'ଶୁଣୁଛି...',
+        processing: 'ଆପଣଙ୍କ ଆବାଜ ପ୍ରକ୍ରିୟା ହେଉଛି...',
         voiceInput: 'ଭଏସ୍ ଇନପୁଟ୍',
         previous: 'ପୂର୍ବବର୍ତ୍ତୀ',
         nextQuestion: 'ପରବର୍ତ୍ତୀ ପ୍ରଶ୍ନ',
@@ -1162,6 +1173,7 @@ export const translations: Record<string, TranslationKeys> = {
         stopRecording: 'ਰਿਕਾਰਡਿੰਗ ਬੰਦ ਕਰੋ',
         startVoiceInput: 'ਵੌਇਸ ਇਨਪੁੱਟ ਸ਼ੁਰੂ ਕਰੋ',
         listening: 'ਸੁਣ ਰਹੇ ਹਾਂ...',
+        processing: 'ਤੁਹਾਡੀ ਆਵਾਜ਼ ਪ੍ਰਕਿਰਿਆ ਹੋ ਰਹੀ ਹੈ...',
         voiceInput: 'ਵੌਇਸ ਇਨਪੁੱਟ',
         previous: 'ਪਿਛਲਾ',
         nextQuestion: 'ਅਗਲਾ ਸਵਾਲ',
@@ -1260,6 +1272,7 @@ export const translations: Record<string, TranslationKeys> = {
         stopRecording: 'ریکارڈنگ بند کریں',
         startVoiceInput: 'وائس ان پٹ شروع کریں',
         listening: 'سن رہے ہیں...',
+        processing: 'آپ کی آواز پروسیس ہو رہی ہے...',
         voiceInput: 'وائس ان پٹ',
         previous: 'پچھلا',
         nextQuestion: 'اگلا سوال',

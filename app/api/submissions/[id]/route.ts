@@ -53,24 +53,28 @@ export async function GET(
       );
     }
 
-    // Check if in final state (collected/rejected)
+    // Check if in final state (collected/rejected) — still return full data for display
     const isFinal = isSubmissionFinal(submission);
     if (isFinal) {
       return NextResponse.json(
         {
-          success: false,
-          error: 'Submission completed',
-          message: submission.status === 'collected'
-            ? 'This application has been collected.'
-            : 'This application was rejected.',
+          success: true,
           submission: {
             id: submission.id,
+            serviceId: submission.serviceId,
+            serviceName: submission.serviceName,
+            userDetails: submission.userDetails,
+            submittedAt: submission.submittedAt,
             status: submission.status,
             statusLabel: STATUS_LABELS[submission.status],
+            statusHistory: submission.statusHistory || [],
             isExpired: true,
+            viewedBy: submission.viewedBy || [],
+            modifiedAt: submission.modifiedAt,
+            adminNotes: submission.adminNotes,
           },
         },
-        { status: 410 } // 410 Gone
+        { status: 200 } // return 200 so the page always shows the submission
       );
     }
 
@@ -153,7 +157,7 @@ export async function PATCH(
         // Normalize email: trim and lowercase
         userEmail = userEmail.trim().toLowerCase();
       }
-      
+
       console.log('[API] Status update - attempting to notify:', {
         submissionId: id,
         userEmail,
@@ -161,7 +165,7 @@ export async function PATCH(
         hasEmail: !!userEmail,
         userDetails: Object.keys(submission.userDetails)
       });
-      
+
       if (userEmail) {
         const notificationMessages: Record<SubmissionStatus, { title: string; message: string; type: 'info' | 'success' | 'warning' | 'error' }> = {
           submitted: { title: 'Application Submitted', message: `Your ${submission.serviceName} application has been submitted. Our team will review it shortly.`, type: 'info' },

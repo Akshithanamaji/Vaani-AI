@@ -722,33 +722,60 @@ export async function POST(request: NextRequest) {
       fieldName = body.fieldName;
       context = body.context;
 
-      // OPTIONAL BUT VITAL: Use Gemini to normalize spoken dates, emails, and phones into strictly formatted strings.
-      if (["dob", "date", "email", "phone"].includes(fieldName) && transcript) {
+      // OPTIONAL BUT VITAL: Use Gemini to normalize spoken dates, emails, phones, and Aadhaar into strictly formatted strings.
+      // IMPORTANT: Only normalize fields that benefit from it. NEVER reformat name fields.
+      const NAME_FIELD_IDS = ['name', 'owner', 'father', 'mother', 'husband', 'guardian', 'applicant', 'spouse', 'nominee'];
+      const isNameField = NAME_FIELD_IDS.some(k => fieldName.toLowerCase().includes(k));
+
+      const NORMALIZE_FIELDS = ['dob', 'date', 'email', 'phone', 'mobile', 'aadhaar', 'aadhar', 'pan', 'pincode', 'ifsc', 'gstin', 'uan'];
+      const shouldNormalize = !isNameField && NORMALIZE_FIELDS.some(k => fieldName.toLowerCase().includes(k));
+
+      if (shouldNormalize && transcript) {
         try {
-          console.log(
-            `[API] Using Gemini to normalize '${fieldName}' from transcript: ${transcript}`,
-          );
-          const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+          console.log(`[API] Using Gemini to normalize '${fieldName}' from transcript: ${transcript}`);
+          const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
           let prompt = `Extract the core information from this spoken transcript: "${transcript}". `;
 
-          if (fieldName === "dob" || fieldName === "date")
+          if (fieldName.includes('dob') || fieldName.includes('date'))
             prompt += `Format it STRICTLY as YYYY-MM-DD. For example, "18th September 2004" becomes "2004-09-18". Return NOTHING ELSE but the formatted date.`;
-          if (fieldName === "email")
-            prompt += `Format it as a standard email address with no spaces. Convert words like 'at' or 'dot' to standard symbols. Make it fully lowercase. Return NOTHING ELSE but the formatted email.`;
-          if (fieldName === "phone")
-            prompt += `Extract just the numbers. Remove all spaces and letters. Return NOTHING ELSE but the digits.`;
+          else if (fieldName.includes('email'))
+            prompt += `Format as a standard email address. Convert words like 'at' to @ and 'dot' to . Make it fully lowercase. Return NOTHING ELSE but the email.`;
+          else if (fieldName.includes('phone') || fieldName.includes('mobile'))
+            prompt += `Extract just the 10 digits of the Indian mobile number. Remove all spaces and non-digits. Return NOTHING ELSE but the 10 digits.`;
+          else if (fieldName.includes('aadhaar') || fieldName.includes('aadhar'))
+            prompt += `Extract just the 12 digits of the Aadhaar number. Remove all spaces. Return NOTHING ELSE but the 12 digits.`;
+          else if (fieldName.includes('pan'))
+            prompt += `The PAN card format is 5 letters + 4 digits + 1 letter (e.g. ABCDE1234F). Extract and format this. Return NOTHING ELSE in uppercase.`;
+          else if (fieldName.includes('pincode'))
+            prompt += `Extract just the 6-digit PIN code. Return NOTHING ELSE but the 6 digits.`;
+          else if (fieldName.includes('ifsc'))
+            prompt += `The IFSC code is 4 letters + 0 + 6 alphanumeric characters (e.g. SBIN0001234). Return it in uppercase. Return NOTHING ELSE.`;
+          else if (fieldName.includes('gstin'))
+            prompt += `Format as a standard GSTIN (15 chars). Return in UPPERCASE. Return NOTHING ELSE.`;
+          else if (fieldName.includes('uan'))
+            prompt += `Extract just the 12-digit UAN number. Return NOTHING ELSE but the digits.`;
+          else
+            prompt += `Return only the extracted value with no explanation.`;
 
           const result = await model.generateContent(prompt);
-          const formatted = result.response.text().trim().toLowerCase(); // lowercase it here mainly to be safe for email.
+          let formatted = result.response.text().trim();
+
+          // Apply lowercase ONLY for email — never for other fields
+          if (fieldName.includes('email')) {
+            formatted = formatted.toLowerCase();
+          }
+
           if (formatted) {
-            console.log(
-              `[API] Gemini formatted ${fieldName} from "${transcript}" -> "${formatted}"`,
-            );
+            console.log(`[API] Gemini normalized ${fieldName}: "${transcript}" -> "${formatted}"`);
             transcript = formatted;
           }
         } catch (e) {
-          console.error("[API] Failed to use Gemini to re-format", e);
+          console.error('[API] Failed to use Gemini to re-format', e);
         }
+      } else if (!isNameField && !shouldNormalize && transcript) {
+        // For other text fields (address, occupation etc.) — minor cleanup only
+        // Trim but preserve original casing
+        transcript = transcript.trim();
       }
     }
 

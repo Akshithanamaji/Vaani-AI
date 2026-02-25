@@ -851,26 +851,28 @@ export function getFieldDescription(
  */
 export async function transcribeWithGroqWhisper(
   audioBlob: Blob,
-  language: string = "hi",
+  language: string = 'hi',
+  fieldName: string = '',
 ): Promise<{ success: boolean; text: string; error?: string }> {
   try {
     const reader = new FileReader();
     const audioData = await new Promise<string>((resolve, reject) => {
       reader.onload = () => {
-        const base64 = (reader.result as string).split(",")[1];
+        const base64 = (reader.result as string).split(',')[1];
         resolve(base64);
       };
-      reader.onerror = () => reject("Failed to read audio");
+      reader.onerror = () => reject('Failed to read audio');
       reader.readAsDataURL(audioBlob);
     });
 
-    const response = await fetch("/api/speech-to-text", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    const response = await fetch('/api/speech-to-text', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         audio: audioData,
-        mimeType: audioBlob.type || "audio/wav",
+        mimeType: audioBlob.type || 'audio/wav',
         language,
+        fieldName,  // ← field context for Whisper prompt injection
       }),
     });
 

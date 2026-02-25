@@ -27,6 +27,8 @@ interface QRDisplayProps {
 
 const QRDisplayComponent = ({ submission, language, onNewApplication }: QRDisplayProps) => {
   const [qrImageUrl, setQrImageUrl] = useState('');
+  const [generatedQrUrl, setGeneratedQrUrl] = useState('');
+  const [lanIp, setLanIp] = useState('');
   const status = submission.status || 'submitted';
   const statusInfo = STATUS_LABELS[status] || STATUS_LABELS.submitted;
 
@@ -38,11 +40,47 @@ const QRDisplayComponent = ({ submission, language, onNewApplication }: QRDispla
   };
 
   useEffect(() => {
-    // Generate QR image URL using backend submission ID
-    const qrData = submission.qrUrl || `${window.location.origin}/submission/${submission.id}`;
-    const encodedUrl = encodeURIComponent(qrData);
-    const url = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodedUrl}`;
-    setQrImageUrl(url);
+    // Fetch the machine's LAN IP so phones on the same WiFi can reach the server.
+    // Falls back to window.location.origin if the API call fails.
+    const buildQrUrl = async () => {
+      let origin = window.location.origin;
+
+      try {
+        const res = await fetch('/api/local-ip');
+        if (res.ok) {
+          const { ip } = await res.json();
+          if (ip && ip !== '127.0.0.1') {
+            // Replace hostname/localhost with actual LAN IP
+            const port = window.location.port ? `:${window.location.port}` : '';
+            origin = `http://${ip}${port}`;
+            setLanIp(ip);
+          }
+        }
+      } catch {
+        // silent fallback to window.location.origin
+      }
+
+      // Embed a compact version of submission data as fallback
+      // (keeps QR code simple enough to scan reliably)
+      const minimalData = {
+        id: submission.id,
+        sn: submission.serviceName,
+        n: submission.userDetails?.name || submission.userDetails?.fullName || '',
+        p: submission.userDetails?.phone || submission.userDetails?.mobile || '',
+        t: submission.submittedAt,
+        st: submission.status || 'submitted',
+      };
+      const embeddedData = btoa(unescape(encodeURIComponent(JSON.stringify(minimalData))));
+
+      const qrUrl = `${origin}/submission/${submission.id}?data=${encodeURIComponent(embeddedData)}`;
+      const encodedUrl = encodeURIComponent(qrUrl);
+      const url = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&ecc=M&data=${encodedUrl}`;
+      setQrImageUrl(url);
+      // Store generated URL for copy button
+      setGeneratedQrUrl(qrUrl);
+    };
+
+    buildQrUrl();
 
     // Speak success message
     const messages: Record<string, string> = {
@@ -100,8 +138,18 @@ const QRDisplayComponent = ({ submission, language, onNewApplication }: QRDispla
   };
 
   const copyQRData = () => {
-    navigator.clipboard.writeText(submission.qrCode);
-    alert('QR Code copied to clipboard');
+    const url = generatedQrUrl || submission.qrUrl || `${window.location.origin}/submission/${submission.id}`;
+    navigator.clipboard.writeText(url).then(() => {
+      alert('Submission link copied! Open this link in any browser on the same WiFi to view your application details.');
+    }).catch(() => {
+      const el = document.createElement('textarea');
+      el.value = url;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand('copy');
+      document.body.removeChild(el);
+      alert('Submission link copied!');
+    });
   };
 
   return (
@@ -140,7 +188,7 @@ const QRDisplayComponent = ({ submission, language, onNewApplication }: QRDispla
             <div className="p-8">
               {/* QR Code Display */}
               {qrImageUrl && (
-                <div className="flex justify-center mb-8">
+                <div className="flex flex-col items-center mb-8 gap-3">
                   <div className="p-6 bg-white rounded-2xl shadow-lg border border-gray-100">
                     <Image
                       src={qrImageUrl || "/placeholder.svg"}
@@ -151,74 +199,88 @@ const QRDisplayComponent = ({ submission, language, onNewApplication }: QRDispla
                       className="rounded-lg"
                     />
                   </div>
+                  {lanIp ? (
+                    <div className="flex items-center gap-2 px-4 py-2 bg-green-50 border border-green-200 rounded-full">
+                      <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span className="text-xs font-semibold text-green-700">
+                        📱 Scan from your phone — points to <code className="font-mono">{lanIp}</code>
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 px-4 py-2 bg-yellow-50 border border-yellow-200 rounded-full">
+                      <svg className="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                      <span className="text-xs font-semibold text-yellow-700">
+                        ⚠️ Make sure your phone is on the same WiFi network
+                      </span>
+                    </div>
+                  )}
                 </div>
               )}
 
               {/* Application Status */}
-              <div className={`border rounded-2xl p-6 mb-6 ${
-                statusInfo.color === 'blue' ? 'bg-blue-50 border-blue-200' :
+              <div className={`border rounded-2xl p-6 mb-6 ${statusInfo.color === 'blue' ? 'bg-blue-50 border-blue-200' :
                 statusInfo.color === 'yellow' ? 'bg-yellow-50 border-yellow-200' :
-                statusInfo.color === 'orange' ? 'bg-orange-50 border-orange-200' :
-                statusInfo.color === 'green' ? 'bg-green-50 border-green-200' :
-                statusInfo.color === 'emerald' ? 'bg-emerald-50 border-emerald-200' :
-                statusInfo.color === 'red' ? 'bg-red-50 border-red-200' :
-                'bg-gray-50 border-gray-200'
-              }`}>
+                  statusInfo.color === 'orange' ? 'bg-orange-50 border-orange-200' :
+                    statusInfo.color === 'green' ? 'bg-green-50 border-green-200' :
+                      statusInfo.color === 'emerald' ? 'bg-emerald-50 border-emerald-200' :
+                        statusInfo.color === 'red' ? 'bg-red-50 border-red-200' :
+                          'bg-gray-50 border-gray-200'
+                }`}>
                 <div className="flex items-center gap-3 mb-3">
-                  <svg className={`w-5 h-5 ${
-                    statusInfo.color === 'blue' ? 'text-blue-600' :
+                  <svg className={`w-5 h-5 ${statusInfo.color === 'blue' ? 'text-blue-600' :
                     statusInfo.color === 'yellow' ? 'text-yellow-600' :
-                    statusInfo.color === 'orange' ? 'text-orange-600' :
-                    statusInfo.color === 'green' ? 'text-green-600' :
-                    statusInfo.color === 'emerald' ? 'text-emerald-600' :
-                    statusInfo.color === 'red' ? 'text-red-600' :
-                    'text-gray-600'
-                  }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      statusInfo.color === 'orange' ? 'text-orange-600' :
+                        statusInfo.color === 'green' ? 'text-green-600' :
+                          statusInfo.color === 'emerald' ? 'text-emerald-600' :
+                            statusInfo.color === 'red' ? 'text-red-600' :
+                              'text-gray-600'
+                    }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <h3 className={`font-bold ${
-                    statusInfo.color === 'blue' ? 'text-blue-800' :
+                  <h3 className={`font-bold ${statusInfo.color === 'blue' ? 'text-blue-800' :
                     statusInfo.color === 'yellow' ? 'text-yellow-800' :
-                    statusInfo.color === 'orange' ? 'text-orange-800' :
-                    statusInfo.color === 'green' ? 'text-green-800' :
-                    statusInfo.color === 'emerald' ? 'text-emerald-800' :
-                    statusInfo.color === 'red' ? 'text-red-800' :
-                    'text-gray-800'
-                  }`}>Application Status</h3>
+                      statusInfo.color === 'orange' ? 'text-orange-800' :
+                        statusInfo.color === 'green' ? 'text-green-800' :
+                          statusInfo.color === 'emerald' ? 'text-emerald-800' :
+                            statusInfo.color === 'red' ? 'text-red-800' :
+                              'text-gray-800'
+                    }`}>Application Status</h3>
                 </div>
-                <div className={`text-2xl font-bold mb-2 ${
-                  statusInfo.color === 'blue' ? 'text-blue-700' :
+                <div className={`text-2xl font-bold mb-2 ${statusInfo.color === 'blue' ? 'text-blue-700' :
                   statusInfo.color === 'yellow' ? 'text-yellow-700' :
-                  statusInfo.color === 'orange' ? 'text-orange-700' :
-                  statusInfo.color === 'green' ? 'text-green-700' :
-                  statusInfo.color === 'emerald' ? 'text-emerald-700' :
-                  statusInfo.color === 'red' ? 'text-red-700' :
-                  'text-gray-700'
-                }`}>
+                    statusInfo.color === 'orange' ? 'text-orange-700' :
+                      statusInfo.color === 'green' ? 'text-green-700' :
+                        statusInfo.color === 'emerald' ? 'text-emerald-700' :
+                          statusInfo.color === 'red' ? 'text-red-700' :
+                            'text-gray-700'
+                  }`}>
                   {getStatusLabel()}
                 </div>
-                <p className={`text-sm font-medium ${
-                  statusInfo.color === 'blue' ? 'text-blue-600' :
+                <p className={`text-sm font-medium ${statusInfo.color === 'blue' ? 'text-blue-600' :
                   statusInfo.color === 'yellow' ? 'text-yellow-600' :
-                  statusInfo.color === 'orange' ? 'text-orange-600' :
-                  statusInfo.color === 'green' ? 'text-green-600' :
-                  statusInfo.color === 'emerald' ? 'text-emerald-600' :
-                  statusInfo.color === 'red' ? 'text-red-600' :
-                  'text-gray-600'
-                }`}>
-                  {status === 'ready_for_collection' 
+                    statusInfo.color === 'orange' ? 'text-orange-600' :
+                      statusInfo.color === 'green' ? 'text-green-600' :
+                        statusInfo.color === 'emerald' ? 'text-emerald-600' :
+                          statusInfo.color === 'red' ? 'text-red-600' :
+                            'text-gray-600'
+                  }`}>
+                  {status === 'ready_for_collection'
                     ? 'Please visit the office to collect your document'
                     : status === 'collected'
-                    ? 'Document collected successfully'
-                    : status === 'rejected'
-                    ? 'Please contact the office for details'
-                    : 'You will be notified when your document is ready'}
+                      ? 'Document collected successfully'
+                      : status === 'rejected'
+                        ? 'Please contact the office for details'
+                        : 'You will be notified when your document is ready'}
                 </p>
               </div>
             </div>
           </Card>
 
-          
+
 
           {/* Action Buttons */}
           <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm p-8">
@@ -257,7 +319,7 @@ const QRDisplayComponent = ({ submission, language, onNewApplication }: QRDispla
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                 </svg>
-                Copy QR Data
+                Copy Submission Link
               </Button>
             </div>
 

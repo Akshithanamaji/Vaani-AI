@@ -1,16 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import { Upload, X, CheckCircle2, AlertCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Upload, X, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 
 interface FileUploadProps {
   label: string;
-  fileId: string;
+  fieldId: string;
   accept?: string;
   maxSize?: number; // in MB
   currentFile?: string;
   onFileChange: (fileName: string, file: File | null) => void;
+  onValidationChange?: (isValid: boolean) => void; // new: notify parent of validity
   error?: string | null;
   isListening?: boolean;
   onStartRecording?: () => void;
@@ -21,226 +21,191 @@ interface FileUploadProps {
 
 export function FileUpload({
   label,
-  fileId,
+  fieldId,
   accept = '.pdf,.jpg,.jpeg,.png,.doc,.docx',
   maxSize = 5,
   currentFile,
   onFileChange,
+  onValidationChange,
   error,
-  isListening = false,
-  onStartRecording,
-  onStopRecording,
-  voicePrompt,
   language = 'en',
 }: FileUploadProps) {
   const [dragActive, setDragActive] = useState(false);
   const [fileError, setFileError] = useState<string | null>(null);
-  const [uploadProgress, setUploadProgress] = useState(0);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isValidating, setIsValidating] = useState(false);
+  const [isFileValid, setIsFileValid] = useState<boolean | null>(null);
 
-  const validateFile = (file: File): boolean => {
-    // Check file size
+  const validateFileLocally = (file: File): boolean => {
     const maxSizeBytes = maxSize * 1024 * 1024;
     if (file.size > maxSizeBytes) {
-      const errorMsg = language === 'hi' 
-        ? `फ़ाइल का आकार ${maxSize}MB से बड़ा नहीं हो सकता. आपकी फ़ाइल ${(file.size / (1024 * 1024)).toFixed(2)}MB है।`
-        : `File size cannot exceed ${maxSize}MB. Your file is ${(file.size / (1024 * 1024)).toFixed(2)}MB`;
-      setFileError(errorMsg);
+      setFileError(`File too large. Max size: ${maxSize}MB (yours: ${(file.size / (1024 * 1024)).toFixed(1)}MB)`);
       return false;
     }
-
-    // Check file type
-    const allowedTypes = accept.split(',').map(type => type.trim());
-    const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
+    const allowedTypes = accept.split(',').map(t => t.trim().toLowerCase());
+    const fileExtension = '.' + (file.name.split('.').pop()?.toLowerCase() || '');
     if (!allowedTypes.includes(fileExtension)) {
-      const errorMsg = language === 'hi'
-        ? `केवल ये फ़ाइलें स्वीकृत हैं: ${allowedTypes.join(', ')}`
-        : `Only these file types are accepted: ${allowedTypes.join(', ')}`;
-      setFileError(errorMsg);
+      setFileError(`Only accepted: ${allowedTypes.join(', ')}`);
       return false;
     }
-
-    setFileError(null);
     return true;
   };
 
-  const handleFile = (file: File) => {
-    if (validateFile(file)) {
-      setSelectedFile(file);
+  const validateFileWithAI = async (file: File) => {
+    setIsValidating(true);
+    setFileError(null);
+    setIsFileValid(null);
+    onValidationChange?.(false); // block next until validated
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('fieldId', fieldId);
+      formData.append('fieldLabel', label);
+      formData.append('language', language);
+
+      const res = await fetch('/api/validate-file', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const result = await res.json();
+
+      if (result.isValid) {
+        setIsFileValid(true);
+        setFileError(null);
+        onValidationChange?.(true); // unblock next
+        onFileChange(file.name, file);
+      } else {
+        setIsFileValid(false);
+        setFileError(result.errorMessage || `Wrong file. Please upload your ${label}.`);
+        onValidationChange?.(false);
+        // Clear the file — force user to re-upload
+        setSelectedFile(null);
+        onFileChange('', null);
+        const input = document.getElementById(`file-input-${fieldId}`) as HTMLInputElement;
+        if (input) input.value = '';
+      }
+    } catch (e) {
+      console.error('[FileUpload] AI validation error:', e);
+      // On API error — accept the file anyway (graceful fallback)
+      setIsFileValid(true);
+      setFileError(null);
+      onValidationChange?.(true);
       onFileChange(file.name, file);
-      // Simulate upload progress
-      setUploadProgress(100);
+    } finally {
+      setIsValidating(false);
     }
   };
 
+  const handleFile = async (file: File) => {
+    if (!validateFileLocally(file)) return;
+    setSelectedFile(file);
+    await validateFileWithAI(file);
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      handleFile(e.target.files[0]);
-    }
+    if (e.target.files?.[0]) handleFile(e.target.files[0]);
   };
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (e.type === 'dragenter' || e.type === 'dragover') {
-      setDragActive(true);
-    } else if (e.type === 'dragleave') {
-      setDragActive(false);
-    }
+    setDragActive(e.type === 'dragenter' || e.type === 'dragover');
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleFile(e.dataTransfer.files[0]);
-    }
+    if (e.dataTransfer.files?.[0]) handleFile(e.dataTransfer.files[0]);
   };
 
-  const getFileInfo = (fileName: string) => {
-    const ext = fileName.split('.').pop()?.toUpperCase() || 'FILE';
-    const typeInfo = {
-      PDF: '📄 PDF Document',
-      JPG: '🖼️ JPEG Image',
-      JPEG: '🖼️ JPEG Image',
-      PNG: '🖼️ PNG Image',
-      DOC: '📝 Word Document',
-      DOCX: '📝 Word Document',
-    };
-    return typeInfo[ext as keyof typeof typeInfo] || `📎 ${ext} File`;
+  const handleRemove = () => {
+    setSelectedFile(null);
+    setIsFileValid(null);
+    setFileError(null);
+    onFileChange('', null);
+    onValidationChange?.(false);
+    const input = document.getElementById(`file-input-${fieldId}`) as HTMLInputElement;
+    if (input) input.value = '';
   };
 
-  const displayFileName = currentFile || selectedFile?.name;
+  const displayFileName = isFileValid ? (currentFile || selectedFile?.name) : null;
 
   return (
-    <div className="space-y-4">
-      {/* File Upload Area */}
+    <div className="space-y-3">
+      {/* Upload Zone */}
       <div
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
         onDragOver={handleDrag}
         onDrop={handleDrop}
         className={`relative border-2 border-dashed rounded-xl p-8 transition-all duration-200 text-center cursor-pointer
-          ${dragActive 
-            ? 'border-purple-500 bg-purple-50' 
-            : 'border-gray-300 bg-gray-50 hover:border-purple-300 hover:bg-purple-50/30'
-          }
-          ${fileError ? 'border-red-300 bg-red-50' : ''}
+          ${dragActive ? 'border-purple-500 bg-purple-500/10' : ''}
+          ${isValidating ? 'border-yellow-500 bg-yellow-500/5' : ''}
+          ${isFileValid === true ? 'border-green-500 bg-green-500/5' : ''}
+          ${isFileValid === false || fileError ? 'border-red-500 bg-red-500/5' : ''}
+          ${!dragActive && !isValidating && isFileValid === null && !fileError
+            ? 'border-neutral-700 bg-neutral-900 hover:border-purple-500 hover:bg-purple-500/5'
+            : ''}
         `}
       >
         <input
           type="file"
-          id={fileId}
+          id={`file-input-${fieldId}`}
           accept={accept}
           onChange={handleChange}
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+          disabled={isValidating}
         />
 
-        <div className="space-y-3">
-          {displayFileName ? (
+        <div className="space-y-3 pointer-events-none">
+          {isValidating ? (
             <>
-              <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto" />
-              <div>
-                <p className="text-sm font-semibold text-gray-700">{getFileInfo(displayFileName)}</p>
-                <p className="text-xs text-gray-600 mb-2">{displayFileName}</p>
-              </div>
+              <Loader2 className="w-12 h-12 text-yellow-400 mx-auto animate-spin" />
+              <p className="text-sm font-medium text-yellow-400">Checking your document…</p>
+            </>
+          ) : isFileValid === true ? (
+            <>
+              <CheckCircle2 className="w-12 h-12 text-green-400 mx-auto" />
+              <p className="text-sm font-semibold text-green-400">Document verified ✓</p>
+              <p className="text-xs text-neutral-400">{displayFileName}</p>
+            </>
+          ) : isFileValid === false ? (
+            <>
+              <AlertCircle className="w-12 h-12 text-red-400 mx-auto" />
+              <p className="text-sm font-semibold text-red-400">Wrong document — please try again</p>
+              <p className="text-xs text-neutral-500">Click or drag to upload the correct file</p>
             </>
           ) : (
             <>
-              <Upload className="w-12 h-12 text-gray-400 mx-auto" />
-              <div>
-                <p className="text-sm font-semibold text-gray-700">
-                  {language === 'hi' ? 'फ़ाइल डालें या क्लिक करें' : 'Drag & drop your file or click'}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">
-                  {language === 'hi' 
-                    ? `अपना प्रमाण दस्तावेज़ अपलोड करें (${maxSize}MB तक)`
-                    : `Upload your proof document (up to ${maxSize}MB)`
-                  }
-                </p>
-                <p className="text-xs text-gray-400 mt-2">
-                  {language === 'hi'
-                    ? `स्वीकृत: ${accept}`
-                    : `Accepted: ${accept}`
-                  }
-                </p>
-              </div>
+              <Upload className="w-12 h-12 text-neutral-500 mx-auto" />
+              <p className="text-sm font-semibold text-neutral-300">
+                Click or drag &amp; drop to upload
+              </p>
             </>
           )}
         </div>
       </div>
 
-      {/* Upload Progress */}
-      {uploadProgress > 0 && uploadProgress < 100 && (
-        <div className="space-y-1">
-          <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-            <div
-              className="bg-gradient-to-r from-purple-500 to-purple-600 h-full transition-all duration-300"
-              style={{ width: `${uploadProgress}%` }}
-            />
-          </div>
-          <p className="text-xs text-gray-600 text-center">{uploadProgress}% {language === 'hi' ? 'अपलोड किया जा रहा है' : 'Uploading'}</p>
+      {/* Error message */}
+      {(fileError || (error && isFileValid !== true)) && (
+        <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-xl flex items-start gap-2">
+          <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+          <p className="text-sm text-red-400">{fileError || error}</p>
         </div>
       )}
 
-      {/* File Info */}
-      {displayFileName && (
-        <div className="p-3 bg-green-50 border border-green-200 rounded-lg flex items-start justify-between">
-          <div className="flex-1">
-            <p className="text-sm text-green-700 font-medium">
-              ✅ {language === 'hi' ? 'फ़ाइल तैयार है' : 'File Ready'}
-            </p>
-            <p className="text-xs text-green-600 mt-1">
-              {language === 'hi' ? 'आपकी फ़ाइल सफलतापूर्वक अपलोड की गई है' : 'Your proof document has been uploaded successfully'}
-            </p>
-          </div>
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              setSelectedFile(null);
-              setUploadProgress(0);
-              onFileChange('', null);
-              // Reset input
-              const input = document.getElementById(fileId) as HTMLInputElement;
-              if (input) input.value = '';
-            }}
-            className="ml-2 text-green-600 hover:text-red-600 transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-      )}
-
-      {/* Error Messages */}
-      {(fileError || error) && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
-          <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-          <p className="text-sm text-red-700 font-medium">{fileError || error}</p>
-        </div>
-      )}
-
-      {/* Voice Instruction */}
-      {voicePrompt && (
-        <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-xs text-blue-600 italic">{voicePrompt}</p>
-        </div>
-      )}
-
-      {/* Voice Button */}
-      {onStartRecording && (
-        <Button
-          onClick={isListening ? onStopRecording : onStartRecording}
-          variant="outline"
-          className={`w-full h-12 border-2 transition-all duration-200 ${
-            isListening
-              ? 'border-red-400 bg-red-50 text-red-600 hover:bg-red-100'
-              : 'border-purple-300 text-purple-600 hover:bg-purple-50'
-          }`}
+      {/* Remove button when valid */}
+      {isFileValid === true && displayFileName && (
+        <button
+          onClick={handleRemove}
+          className="w-full flex items-center justify-center gap-2 py-2 text-xs text-neutral-500 hover:text-red-400 transition-colors"
         >
-          {isListening ? '⏹️ Stop Recording' : '🎙️ Describe Your Document'}
-        </Button>
+          <X className="w-4 h-4" />
+          Remove and re-upload
+        </button>
       )}
     </div>
   );

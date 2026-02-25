@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -23,6 +23,7 @@ import { GOVERNMENT_SERVICES, getTranslatedService } from '@/lib/government-serv
 import { translations } from '@/lib/translations';
 import { FIELD_TRANSLATIONS } from '@/lib/field-translations';
 import { useAudioRecorder } from '@/lib/audio-recorder';
+import { runSmartValidation, type ValidationIssue } from '@/lib/smart-validation';
 import QRDisplay from './qr-display';
 
 interface VoiceFormProps {
@@ -56,6 +57,13 @@ const VoiceFormComponent = ({ service, userEmail, language = 'en-IN', selectedLo
   const [backendResponse, setBackendResponse] = useState<string | null>(null);
   const [useGroqWhisper] = useState(true); // Use Groq Whisper by default
   const [shouldTranscribeBlob, setShouldTranscribeBlob] = useState(false);
+
+  // ── Smart Validation state ────────────────────────────────────────────────
+  const [validationIssues, setValidationIssues] = useState<ValidationIssue[]>([]);
+  const [isValidating, setIsValidating] = useState(false);
+  const [validationDone, setValidationDone] = useState(false);
+  const [aiValidationDone, setAiValidationDone] = useState(false);
+  const [fileValidated, setFileValidated] = useState(false); // AI file validation gate
 
   // Audio recording with Groq Whisper
   const { isRecording, recordingTime, audioBlob, startRecording, stopRecording, resetRecording } = useAudioRecorder();
@@ -154,7 +162,8 @@ const VoiceFormComponent = ({ service, userEmail, language = 'en-IN', selectedLo
       const transcribeNow = async () => {
         console.log('[VoiceForm] Transcribing with Groq Whisper, blob size:', audioBlob.size);
         const langCode = (language || 'en-IN').split('-')[0];
-        const result = await transcribeWithGroqWhisper(audioBlob, langCode);
+        // Pass fieldId so Whisper gets a context prompt specific to this field
+        const result = await transcribeWithGroqWhisper(audioBlob, langCode, currentField?.id || '');
 
         resetRecording();
 
@@ -396,12 +405,15 @@ const VoiceFormComponent = ({ service, userEmail, language = 'en-IN', selectedLo
     const currentFieldValue = formData[currentField?.id] || '';
     const trimmedValue = currentFieldValue.trim();
 
-    // For file fields, check if any file is selected
+    // For file fields, check if any file is selected AND AI-validated
     if (currentField?.type === 'file' || currentField?.requiresFile) {
       if (!trimmedValue || trimmedValue.length === 0) {
-        console.log('[VoiceForm] Cannot proceed - file not uploaded:', currentField?.id);
         setVoiceError(t.pleaseUploadFile);
         speakText(t.pleaseUploadFile, language);
+        return;
+      }
+      if (!fileValidated) {
+        setVoiceError('Please upload the correct document before continuing.');
         return;
       }
     } else {
@@ -439,8 +451,8 @@ const VoiceFormComponent = ({ service, userEmail, language = 'en-IN', selectedLo
   };
 
   const handlePrevious = () => {
-    // Clear error when going back
     setVoiceError(null);
+    setFileValidated(false); // reset file validation when navigating back
     if (currentFieldIndex > 0) {
       setCurrentFieldIndex(currentFieldIndex - 1);
     }
@@ -450,6 +462,50 @@ const VoiceFormComponent = ({ service, userEmail, language = 'en-IN', selectedLo
     setCurrentFieldIndex(index);
     setIsReviewing(false);
   };
+
+  // ── Smart Validation logic ────────────────────────────────────────────────
+  const runValidation = useCallback(async (currentData: Record<string, string>) => {
+    const langCode = (language || 'en-IN').split('-')[0];
+
+    // Step 1: instant rule-based check
+    setIsValidating(true);
+    setValidationDone(false);
+    setAiValidationDone(false);
+    const ruleResult = runSmartValidation(fields, currentData, langCode, service?.id);
+    setValidationIssues(ruleResult.issues);
+    setValidationDone(true);
+    setIsValidating(false);
+
+    // Step 2: AI deep validation (async, non-blocking)
+    try {
+      const res = await fetch('/api/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fields,
+          formData: currentData,
+          language,
+          serviceId: service?.id,
+          serviceName: service?.name,
+          useAI: true,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.issues?.length) {
+          setValidationIssues(prev => {
+            const existingCodes = new Set(prev.map((i: ValidationIssue) => `${i.fieldId}:${i.code}`));
+            const newOnes = data.issues.filter((i: ValidationIssue) => !existingCodes.has(`${i.fieldId}:${i.code}`));
+            return [...prev, ...newOnes];
+          });
+        }
+      }
+    } catch (e) {
+      // AI step failed silently — rule-based still visible
+    } finally {
+      setAiValidationDone(true);
+    }
+  }, [fields, language, service]);
 
   const handleSubmit = async () => {
     try {
@@ -523,7 +579,20 @@ const VoiceFormComponent = ({ service, userEmail, language = 'en-IN', selectedLo
     );
   }
 
+  // Trigger validation when entering review mode
+  useEffect(() => {
+    if (isReviewing) {
+      setValidationIssues([]);
+      setValidationDone(false);
+      setAiValidationDone(false);
+      runValidation(formData);
+    }
+  }, [isReviewing]); // eslint-disable-line react-hooks/exhaustive-deps
+
   if (isReviewing) {
+    const hasErrors = validationIssues.filter(i => i.severity === 'error').length > 0;
+    const hasWarnings = validationIssues.filter(i => i.severity === 'warning').length > 0;
+
     return (
       <div className="min-h-screen bg-black py-8">
         <div className="max-w-4xl mx-auto px-4">
@@ -568,6 +637,81 @@ const VoiceFormComponent = ({ service, userEmail, language = 'en-IN', selectedLo
                 ))}
               </div>
 
+              {/* ── Smart Validation Panel ── */}
+              {(isValidating || validationDone) && (
+                <div className="mb-6">
+                  {/* Header */}
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${isValidating ? 'bg-blue-500/20 text-blue-400 animate-pulse' :
+                      hasErrors ? 'bg-red-500/20 text-red-400' :
+                        hasWarnings ? 'bg-amber-500/20 text-amber-400' :
+                          'bg-emerald-500/20 text-emerald-400'
+                      }`}>
+                      {isValidating ? '⟳' : hasErrors ? '✕' : hasWarnings ? '!' : '✓'}
+                    </div>
+                    <div>
+                      <p className={`font-bold text-sm ${isValidating ? 'text-blue-400' :
+                        hasErrors ? 'text-red-400' :
+                          hasWarnings ? 'text-amber-400' :
+                            'text-emerald-400'
+                        }`}>
+                        {isValidating ? '🤖 AI is checking your application…' :
+                          hasErrors ? `❌ ${validationIssues.filter(i => i.severity === 'error').length} issue${validationIssues.filter(i => i.severity === 'error').length > 1 ? 's' : ''} found — Please fix before submitting` :
+                            hasWarnings ? `⚠️ ${validationIssues.length} warning${validationIssues.length > 1 ? 's' : ''} — Review before submitting` :
+                              '✅ All checks passed — Ready to submit!'}
+                      </p>
+                      {!aiValidationDone && validationDone && (
+                        <p className="text-xs text-neutral-500 mt-0.5">🤖 AI deep scan in progress…</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Issue cards */}
+                  {validationIssues.length > 0 && (
+                    <div className="space-y-2">
+                      {validationIssues.map((issue, idx) => {
+                        const fieldIndex = fields.findIndex((f: any) => f.id === issue.fieldId);
+                        return (
+                          <div
+                            key={`${issue.fieldId}-${idx}`}
+                            className={`flex items-start gap-3 p-3.5 rounded-xl border ${issue.severity === 'error'
+                              ? 'bg-red-950/40 border-red-800/50'
+                              : 'bg-amber-950/40 border-amber-800/50'
+                              }`}
+                          >
+                            <span className={`text-lg mt-0.5 shrink-0 ${issue.severity === 'error' ? 'text-red-400' : 'text-amber-400'
+                              }`}>
+                              {issue.severity === 'error' ? '✗' : '⚠'}
+                            </span>
+                            <div className="flex-1 min-w-0">
+                              <p className={`text-xs font-bold uppercase tracking-wide mb-0.5 ${issue.severity === 'error' ? 'text-red-400' : 'text-amber-400'
+                                }`}>
+                                {issue.fieldLabel}
+                              </p>
+                              <p className="text-sm text-white">{issue.message}</p>
+                              {issue.suggestion && (
+                                <p className="text-xs text-neutral-400 mt-1">💡 {issue.suggestion}</p>
+                              )}
+                            </div>
+                            {fieldIndex >= 0 && (
+                              <button
+                                onClick={() => handleEditField(fieldIndex)}
+                                className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${issue.severity === 'error'
+                                  ? 'bg-red-500/20 text-red-300 hover:bg-red-500/30'
+                                  : 'bg-amber-500/20 text-amber-300 hover:bg-amber-500/30'
+                                  }`}
+                              >
+                                Fix →
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="flex gap-4 pt-6 border-t border-neutral-800">
                 <Button
                   onClick={() => setIsReviewing(false)}
@@ -577,10 +721,14 @@ const VoiceFormComponent = ({ service, userEmail, language = 'en-IN', selectedLo
                   ← {t.backToForm}
                 </Button>
                 <Button
-                  onClick={handleSubmit}
-                  className="flex-1 h-14 bg-gradient-to-r from-cyan-500 to-purple-600 hover:opacity-90 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
+                  onClick={hasErrors ? undefined : handleSubmit}
+                  disabled={isProcessing || isValidating || hasErrors}
+                  className={`flex-1 h-14 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 ${hasErrors
+                    ? 'bg-neutral-700 cursor-not-allowed opacity-60'
+                    : 'bg-gradient-to-r from-cyan-500 to-purple-600 hover:opacity-90'
+                    }`}
                 >
-                  {t.submitApplication}
+                  {isProcessing ? '⟳ Submitting…' : hasErrors ? '⚠ Fix Issues First' : t.submitApplication}
                 </Button>
               </div>
             </div>
@@ -659,8 +807,8 @@ const VoiceFormComponent = ({ service, userEmail, language = 'en-IN', selectedLo
                   {currentField?.type === 'file' || currentField?.requiresFile ? (
                     <FileUpload
                       label={getFieldLabel(currentField?.id, currentField?.label)}
-                      fileId={`file-${currentField?.id}`}
-                      accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                      fieldId={currentField?.id}
+                      accept=".pdf,.jpg,.jpeg,.png"
                       maxSize={5}
                       currentFile={formData[currentField?.id]}
                       onFileChange={(fileName, file) => {
@@ -668,17 +816,14 @@ const VoiceFormComponent = ({ service, userEmail, language = 'en-IN', selectedLo
                           ...prev,
                           [currentField?.id]: fileName
                         }));
+                        if (!fileName) setFileValidated(false);
                         console.log('[VoiceForm] File selected:', fileName);
                       }}
+                      onValidationChange={(valid) => {
+                        setFileValidated(valid);
+                        if (valid) setVoiceError(null);
+                      }}
                       error={voiceError}
-                      isListening={isRecording}
-                      onStartRecording={handleStartListening}
-                      onStopRecording={handleStopListening}
-                      voicePrompt={
-                        currentField?.voiceLabel?.[langCode] ||
-                        currentField?.voiceLabel?.en ||
-                        `${t.pleaseProvide} ${getFieldLabel(currentField?.id, currentField?.label).toLowerCase()}`
-                      }
                       language={langCode}
                     />
                   ) : currentField?.type === 'textarea' ? (
@@ -749,30 +894,6 @@ const VoiceFormComponent = ({ service, userEmail, language = 'en-IN', selectedLo
                     </>
                   )}
 
-                  {/* Voice Input Indicator */}
-                  {(interim || isRecording || isProcessing) && (
-                    <div className="absolute top-full left-0 right-0 mt-4 p-4 bg-neutral-900 rounded-xl border border-neutral-800 flex items-center gap-3 shadow-sm">
-                      <div className="flex gap-1">
-                        <span className="w-2 h-2 bg-cyan-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                        <span className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '200ms' }} />
-                        <span className="w-2 h-2 bg-cyan-500 rounded-full animate-bounce" style={{ animationDelay: '400ms' }} />
-                      </div>
-                      <div className="flex-1">
-                        {isRecording && (
-                          <div className="flex items-center gap-2">
-                            <p className="text-sm text-cyan-400 font-medium">{t.listening}... 🎙️ {recordingTime}s</p>
-                          </div>
-                        )}
-                        {isProcessing && !isRecording && (
-                          <p className="text-sm text-purple-400 font-medium">Transcribing with Groq Whisper Large v3... ✨</p>
-                        )}
-                        {interim && !isRecording && (
-                          <p className="text-sm text-white font-medium">"{interim}"</p>
-                        )}
-                      </div>
-                      <div className="text-xs text-neutral-400 font-medium">{useGroqWhisper ? 'Groq Whisper' : 'Voice Input'}</div>
-                    </div>
-                  )}
                 </div>
               </div>
 
@@ -798,9 +919,16 @@ const VoiceFormComponent = ({ service, userEmail, language = 'en-IN', selectedLo
                 </Button>
                 <Button
                   onClick={handleNext}
-                  className="flex-1 h-14 bg-gradient-to-r from-cyan-500 to-purple-600 hover:opacity-90 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
+                  disabled={(currentField?.type === 'file' || currentField?.requiresFile) && !fileValidated}
+                  className={`flex-1 h-14 text-white font-semibold rounded-xl shadow-lg transition-all duration-200
+                    ${(currentField?.type === 'file' || currentField?.requiresFile) && !fileValidated
+                      ? 'bg-neutral-700 cursor-not-allowed opacity-60'
+                      : 'bg-gradient-to-r from-cyan-500 to-purple-600 hover:opacity-90 hover:shadow-xl'
+                    }`}
                 >
-                  {currentFieldIndex === fields.length - 1 ? t.reviewApplication : `${t.nextQuestion} →`}
+                  {(currentField?.type === 'file' || currentField?.requiresFile) && !fileValidated
+                    ? '🔒 Upload correct document first'
+                    : currentFieldIndex === fields.length - 1 ? t.reviewApplication : `${t.nextQuestion} →`}
                 </Button>
               </div>
             </div>

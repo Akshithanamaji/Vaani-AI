@@ -34,7 +34,7 @@ export default function Home() {
       localStorage.removeItem('vaani_language');
       sessionStorage.setItem('language_reset_done', 'true');
     }
-    
+
     // Check for user session - normalize email
     const storedEmail = localStorage.getItem('vaani_user_email');
     if (storedEmail) {
