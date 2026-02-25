@@ -16,6 +16,7 @@ import jsQR from 'jsqr';
 import { MessageSquare, Mail, Bell, ShieldAlert, ShieldCheck, MapPin } from 'lucide-react';
 import { MessageCenter } from '@/components/message-center';
 import { DocumentCard } from '@/components/document-card';
+import { AnalyticsDashboard } from '@/components/analytics-dashboard';
 
 interface AdminDashboardProps {
   restrictedServiceId?: number;
@@ -44,6 +45,7 @@ export const AdminDashboard = ({ restrictedServiceId, serviceName, adminState, a
   const [editDetails, setEditDetails] = useState<Record<string, string>>({});
   const [activeSection, setActiveSection] = useState<'submitted' | 'under_review' | 'processing' | 'completed' | 'ready_for_collection' | 'collected' | 'rejected'>('submitted');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [showAnalytics, setShowAnalytics] = useState(false);
 
   // Status labels and colors with icons - Modern clean design
   const STATUS_CONFIG: Record<string, { label: string; color: string; bgColor: string; borderColor: string; icon: string; statBg: string; statText: string }> = {
@@ -912,6 +914,13 @@ export const AdminDashboard = ({ restrictedServiceId, serviceName, adminState, a
             <span className="text-lg">📊</span>
             {!sidebarCollapsed && <span className="font-semibold text-sm">Export Data</span>}
           </button>
+          <button
+            onClick={() => setShowAnalytics(!showAnalytics)}
+            className={`w-full flex items-center gap-3 ${sidebarCollapsed ? 'justify-center px-2' : 'px-4'} py-3 rounded-xl transition-all ${showAnalytics ? 'bg-gradient-to-r from-cyan-500/20 to-purple-600/20 text-cyan-400 border border-cyan-500/30' : 'text-gray-300 hover:bg-gray-800'}`}
+          >
+            <span className="text-lg">📈</span>
+            {!sidebarCollapsed && <span className="font-semibold text-sm">Analytics</span>}
+          </button>
 
           {/* Recent Activity */}
           {!sidebarCollapsed && (
@@ -959,7 +968,18 @@ export const AdminDashboard = ({ restrictedServiceId, serviceName, adminState, a
         {/* Top Header */}
         <header className="bg-gray-900 px-8 py-4 flex items-center justify-between border-b border-gray-800 sticky top-0 z-30">
           <div className="flex items-center gap-4">
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">Dashboard</h1>
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">
+              {showAnalytics ? 'Analytics' : 'Dashboard'}
+            </h1>
+            <button
+              onClick={() => setShowAnalytics(!showAnalytics)}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${showAnalytics
+                ? 'bg-gradient-to-r from-cyan-500 to-purple-600 text-white shadow-lg shadow-cyan-500/20'
+                : 'bg-gray-800 border border-gray-700 text-gray-400 hover:text-white hover:border-gray-600'
+                }`}
+            >
+              <span>📈</span> {showAnalytics ? 'Back to Apps' : 'Analytics'}
+            </button>
           </div>
           <div className="flex items-center gap-4">
             {!restrictedServiceId && (
@@ -1015,254 +1035,250 @@ export const AdminDashboard = ({ restrictedServiceId, serviceName, adminState, a
 
         {/* Dashboard Content */}
         <div className="p-8">
-          {/* Stats Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-5 mb-8">
-            {Object.entries(STATUS_CONFIG).map(([key, config]) => {
-              const count = filteredSubmissions.filter(s => (s.status || 'submitted') === key && !s.isExpired && !['ready_for_collection', 'collected', 'rejected'].includes(s.status || '')).length;
-              return (
-                <button
-                  key={key}
-                  onClick={() => setActiveSection(key as any)}
-                  className={`bg-white rounded-xl p-5 border-t-4 ${config.borderColor} hover:shadow-lg transition-all text-left ${activeSection === key ? 'ring-2 ring-cyan-500 shadow-lg' : ''
-                    }`}
-                >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="text-3xl font-black text-gray-900">{count}</p>
-                      <p className="text-xs text-gray-500 font-medium mt-1">{config.label}</p>
-                    </div>
-                    <div className={`w-10 h-10 ${config.bgColor} rounded-xl flex items-center justify-center text-lg`}>
-                      {config.icon}
+          {/* Analytics View */}
+          {showAnalytics && (
+            <AnalyticsDashboard
+              adminState={adminState}
+              adminDistrict={adminDistrict}
+              restrictedServiceId={restrictedServiceId}
+            />
+          )}
+          {/* Normal Dashboard */}
+          {!showAnalytics && (
+            <>
+              {/* Stats Cards */}
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-5 mb-8">
+                {Object.entries(STATUS_CONFIG).map(([key, config]) => {
+                  const count = filteredSubmissions.filter(s => (s.status || 'submitted') === key && !s.isExpired && !['ready_for_collection', 'collected', 'rejected'].includes(s.status || '')).length;
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => setActiveSection(key as any)}
+                      className={`bg-white rounded-xl p-5 border-t-4 ${config.borderColor} hover:shadow-lg transition-all text-left ${activeSection === key ? 'ring-2 ring-cyan-500 shadow-lg' : ''
+                        }`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <p className="text-3xl font-black text-gray-900">{count}</p>
+                          <p className="text-xs text-gray-500 font-medium mt-1">{config.label}</p>
+                        </div>
+                        <div className={`w-10 h-10 ${config.bgColor} rounded-xl flex items-center justify-center text-lg`}>
+                          {config.icon}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {scanMode && (
+                <Card className="p-0 bg-black border-0 shadow-2xl overflow-hidden rounded-2xl relative aspect-video md:aspect-square max-w-md mx-auto mb-8">
+                  <video ref={videoRef} className="w-full h-full object-cover" />
+                  <canvas ref={canvasRef} className="hidden" />
+                  <div className="absolute inset-0 border-[30px] border-black/40 pointer-events-none">
+                    <div className="w-full h-full border-2 border-cyan-400 relative">
+                      <div className="absolute top-0 left-0 w-6 h-6 border-t-3 border-l-3 border-white" />
+                      <div className="absolute top-0 right-0 w-6 h-6 border-t-3 border-r-3 border-white" />
+                      <div className="absolute bottom-0 left-0 w-6 h-6 border-b-3 border-l-3 border-white" />
+                      <div className="absolute bottom-0 right-0 w-6 h-6 border-b-3 border-r-3 border-white" />
+                      <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-cyan-400 opacity-50 animate-pulse" />
                     </div>
                   </div>
-                </button>
-              );
-            })}
-          </div>
+                  <div className="absolute bottom-6 left-0 right-0 text-center">
+                    <p className="inline-block bg-black/60 text-white px-4 py-2 rounded-full text-sm font-medium">
+                      Align QR code within frame
+                    </p>
+                  </div>
+                </Card>
+              )}
 
-          {scanMode && (
-            <Card className="p-0 bg-black border-0 shadow-2xl overflow-hidden rounded-2xl relative aspect-video md:aspect-square max-w-md mx-auto mb-8">
-              <video ref={videoRef} className="w-full h-full object-cover" />
-              <canvas ref={canvasRef} className="hidden" />
-              <div className="absolute inset-0 border-[30px] border-black/40 pointer-events-none">
-                <div className="w-full h-full border-2 border-cyan-400 relative">
-                  <div className="absolute top-0 left-0 w-6 h-6 border-t-3 border-l-3 border-white" />
-                  <div className="absolute top-0 right-0 w-6 h-6 border-t-3 border-r-3 border-white" />
-                  <div className="absolute bottom-0 left-0 w-6 h-6 border-b-3 border-l-3 border-white" />
-                  <div className="absolute bottom-0 right-0 w-6 h-6 border-b-3 border-r-3 border-white" />
-                  <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-cyan-400 opacity-50 animate-pulse" />
+              {/* Main Table Card */}
+              <Card className="bg-white rounded-2xl shadow-sm overflow-hidden">
+                <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">{STATUS_CONFIG[activeSection].icon}</span>
+                    <div>
+                      <h2 className="text-xl font-bold text-gray-900">{STATUS_CONFIG[activeSection].label}</h2>
+                      <p className="text-sm text-gray-500">{filteredSubmissions.filter(s => (s.status || 'submitted') === activeSection).length} total applications</p>
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div className="absolute bottom-6 left-0 right-0 text-center">
-                <p className="inline-block bg-black/60 text-white px-4 py-2 rounded-full text-sm font-medium">
-                  Align QR code within frame
-                </p>
-              </div>
-            </Card>
+
+                {/* Table */}
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-50/80">
+                      <tr>
+                        <th className="text-left px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Name</th>
+                        <th className="text-left px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Service</th>
+                        <th className="text-left px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Location</th>
+                        <th className="text-left px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                        <th className="text-right px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {(() => {
+                        const statusSubmissions = filteredSubmissions.filter(s => (s.status || 'submitted') === activeSection && !s.isExpired && !['ready_for_collection', 'collected', 'rejected'].includes(s.status || ''));
+                        if (statusSubmissions.length === 0) {
+                          return (
+                            <tr>
+                              <td colSpan={5} className="px-6 py-20 text-center">
+                                <div className="text-5xl mb-4">{STATUS_CONFIG[activeSection].icon}</div>
+                                <p className="text-gray-400 font-semibold text-lg">No applications in {STATUS_CONFIG[activeSection].label}</p>
+                                <p className="text-gray-300 text-sm mt-1">Applications will appear here when available</p>
+                              </td>
+                            </tr>
+                          );
+                        }
+                        return statusSubmissions.map((submission) => (
+                          <tr key={submission.id} className="hover:bg-gray-50 transition-colors">
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                                  {(submission.userDetails.name || 'A')[0].toUpperCase()}
+                                </div>
+                                <div>
+                                  <p className="font-semibold text-gray-900">{submission.userDetails.name || 'Anonymous'}</p>
+                                  <p className="text-xs text-gray-400">{submission.userDetails.email || submission.userDetails.phone || '-'}</p>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <p className="text-sm text-gray-700 font-medium">{submission.serviceName}</p>
+                            </td>
+                            <td className="px-6 py-4">
+                              {submission.userDetails._district && submission.userDetails._state ? (
+                                <p className="text-sm text-gray-600">{submission.userDetails._district}</p>
+                              ) : (
+                                <p className="text-sm text-gray-400">-</p>
+                              )}
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className={`inline-flex px-3 py-1 rounded-full text-xs font-bold ${STATUS_CONFIG[activeSection].bgColor} ${STATUS_CONFIG[activeSection].color}`}>
+                                {STATUS_CONFIG[activeSection].label}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-right">
+                              <Button
+                                onClick={() => handleVerifySubmission(submission)}
+                                disabled={isVerifying}
+                                size="sm"
+                                className="bg-gradient-to-r from-cyan-500 to-purple-600 hover:opacity-90 text-white h-9 px-4 rounded-lg font-semibold text-xs"
+                              >
+                                {verifyingId === submission.id ? 'Loading...' : 'View Details'}
+                              </Button>
+                            </td>
+                          </tr>
+                        ));
+                      })()}
+                    </tbody>
+                  </table>
+                </div>
+              </Card>
+            </>
           )}
+        </div>
 
-          {/* Main Table Card */}
-          <Card className="bg-white rounded-2xl shadow-sm overflow-hidden">
-            <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center">
-              <div className="flex items-center gap-3">
-                <span className="text-2xl">{STATUS_CONFIG[activeSection].icon}</span>
-                <div>
-                  <h2 className="text-xl font-bold text-gray-900">{STATUS_CONFIG[activeSection].label}</h2>
-                  <p className="text-sm text-gray-500">{filteredSubmissions.filter(s => (s.status || 'submitted') === activeSection).length} total applications</p>
+        {/* Messages Inbox Modal */}
+        {showMessages && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
+            <Card className="w-full max-w-2xl bg-white shadow-2xl rounded-3xl overflow-hidden border-0 animate-in zoom-in-95 duration-300">
+              <div className="bg-gradient-to-r from-cyan-600 to-purple-600 p-6 text-white flex justify-between items-center">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                    <Mail className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-black text-lg tracking-tight">Citizen Inbox</h3>
+                    <p className="text-xs text-white/70 font-bold uppercase tracking-widest">Incoming Service Queries</p>
+                  </div>
                 </div>
+                <Button onClick={() => setShowMessages(false)} variant="ghost" className="text-white hover:bg-white/10 h-10 w-10 p-0 rounded-full">✕</Button>
               </div>
-            </div>
 
-            {/* Table */}
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50/80">
-                  <tr>
-                    <th className="text-left px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Name</th>
-                    <th className="text-left px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Service</th>
-                    <th className="text-left px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Location</th>
-                    <th className="text-left px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
-                    <th className="text-right px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {(() => {
-                    const statusSubmissions = filteredSubmissions.filter(s => (s.status || 'submitted') === activeSection && !s.isExpired && !['ready_for_collection', 'collected', 'rejected'].includes(s.status || ''));
-                    if (statusSubmissions.length === 0) {
-                      return (
-                        <tr>
-                          <td colSpan={5} className="px-6 py-20 text-center">
-                            <div className="text-5xl mb-4">{STATUS_CONFIG[activeSection].icon}</div>
-                            <p className="text-gray-400 font-semibold text-lg">No applications in {STATUS_CONFIG[activeSection].label}</p>
-                            <p className="text-gray-300 text-sm mt-1">Applications will appear here when available</p>
-                          </td>
-                        </tr>
-                      );
-                    }
-                    return statusSubmissions.map((submission) => (
-                      <tr key={submission.id} className="hover:bg-gray-50 transition-colors">
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                              {(submission.userDetails.name || 'A')[0].toUpperCase()}
+              <div className="p-6 max-h-[500px] overflow-y-auto custom-scrollbar bg-gray-50">
+                {inbox.length === 0 ? (
+                  <div className="text-center py-20">
+                    <p className="text-gray-400 font-black uppercase tracking-[0.2em] italic">Inbox is empty</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {inbox.map((msg, idx) => (
+                      <div
+                        key={`${msg.userEmail}-${msg.serviceId}-${idx}`}
+                        className="p-5 bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md hover:border-cyan-200 transition-all cursor-pointer group"
+                        onClick={() => {
+                          setActiveChat({ userEmail: msg.userEmail, serviceId: msg.serviceId, serviceName: msg.serviceName });
+                          setShowMessages(false);
+                        }}
+                      >
+                        <div className="flex justify-between items-start">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-gradient-to-r from-cyan-50 to-purple-50 text-purple-600 rounded-2xl flex items-center justify-center font-black text-xl group-hover:bg-gradient-to-r group-hover:from-cyan-500 group-hover:to-purple-600 group-hover:text-white transition-all">
+                              {msg.userEmail[0].toUpperCase()}
                             </div>
                             <div>
-                              <p className="font-semibold text-gray-900">{submission.userDetails.name || 'Anonymous'}</p>
-                              <p className="text-xs text-gray-400">{submission.userDetails.email || submission.userDetails.phone || '-'}</p>
+                              <p className="font-black text-gray-900 leading-tight mb-0.5">{msg.userEmail}</p>
+                              <span className="text-[10px] font-black bg-gradient-to-r from-cyan-50 to-purple-50 text-purple-600 px-2 py-0.5 rounded-md uppercase tracking-wider">
+                                {msg.serviceName}
+                              </span>
                             </div>
                           </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <p className="text-sm text-gray-700 font-medium">{submission.serviceName}</p>
-                        </td>
-                        <td className="px-6 py-4">
-                          {submission.userDetails._district && submission.userDetails._state ? (
-                            <p className="text-sm text-gray-600">{submission.userDetails._district}</p>
-                          ) : (
-                            <p className="text-sm text-gray-400">-</p>
-                          )}
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className={`inline-flex px-3 py-1 rounded-full text-xs font-bold ${STATUS_CONFIG[activeSection].bgColor} ${STATUS_CONFIG[activeSection].color}`}>
-                            {STATUS_CONFIG[activeSection].label}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <Button
-                            onClick={() => handleVerifySubmission(submission)}
-                            disabled={isVerifying}
-                            size="sm"
-                            className="bg-gradient-to-r from-cyan-500 to-purple-600 hover:opacity-90 text-white h-9 px-4 rounded-lg font-semibold text-xs"
-                          >
-                            {verifyingId === submission.id ? 'Loading...' : 'View Details'}
-                          </Button>
-                        </td>
-                      </tr>
-                    ));
-                  })()}
-                </tbody>
-              </table>
-            </div>
-          </Card>
-        </div>
+                          <div className="text-right flex flex-col items-end">
+                            {msg.unreadCount > 0 && (
+                              <span className="w-5 h-5 bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center mb-2 ring-2 ring-white">
+                                {msg.unreadCount}
+                              </span>
+                            )}
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Last Activity</p>
+                            <p className="text-xs font-bold text-slate-600">
+                              {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                          </div>
+                        </div>
+                        <div className={`mt-4 p-3 rounded-xl border-l-4 ${msg.unreadCount > 0 ? 'bg-indigo-50 border-indigo-600 font-bold' : 'bg-slate-50 border-indigo-400'}`}>
+                          <p className={`text-sm ${msg.unreadCount > 0 ? 'text-indigo-900' : 'text-slate-600'} italic line-clamp-1`}>{msg.content}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {/* Global Chat Overlay (Admin Side) */}
+        {activeChat && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
+            <MessageCenter
+              serviceId={activeChat.serviceId}
+              serviceName={activeChat.serviceName}
+              userEmail={activeChat.userEmail}
+              senderRole="admin"
+              onClose={() => setActiveChat(null)}
+            />
+          </div>
+        )}
+        {/* Toast Notification */}
+        {toast && toast.show && (
+          <div className="fixed bottom-8 right-8 z-[200] animate-in slide-in-from-right-10 duration-500">
+            <Card className="bg-white border-l-8 border-l-green-500 shadow-[0_10px_40px_rgba(0,0,0,0.15)] p-5 w-80 rounded-2xl flex items-start gap-4 ring-1 ring-slate-100">
+              <div className="w-10 h-10 bg-green-50 text-green-600 rounded-xl flex items-center justify-center shrink-0">
+                <Bell className="w-6 h-6" />
+              </div>
+              <div className="flex-1 overflow-hidden">
+                <div className="flex justify-between items-center mb-1">
+                  <p className="text-[10px] font-black text-green-600 uppercase tracking-widest">Status Update</p>
+                  <button onClick={() => setToast(null)} className="text-slate-300 hover:text-slate-500 transition-colors">✕</button>
+                </div>
+                <p className="text-xs font-black text-slate-800 mb-1">Notification Sent</p>
+                <p className="text-xs text-slate-600 font-medium line-clamp-2">{toast.msg}</p>
+              </div>
+            </Card>
+          </div>
+        )}
       </div>
-
-      <style jsx>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 5px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: #f1f1f1;
-          border-radius: 10px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #e2e8f0;
-          border-radius: 10px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #cbd5e1;
-        }
-      `}</style>
-
-      {/* Messages Inbox Modal */}
-      {showMessages && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
-          <Card className="w-full max-w-2xl bg-white shadow-2xl rounded-3xl overflow-hidden border-0 animate-in zoom-in-95 duration-300">
-            <div className="bg-gradient-to-r from-cyan-600 to-purple-600 p-6 text-white flex justify-between items-center">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                  <Mail className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h3 className="font-black text-lg tracking-tight">Citizen Inbox</h3>
-                  <p className="text-xs text-white/70 font-bold uppercase tracking-widest">Incoming Service Queries</p>
-                </div>
-              </div>
-              <Button onClick={() => setShowMessages(false)} variant="ghost" className="text-white hover:bg-white/10 h-10 w-10 p-0 rounded-full">✕</Button>
-            </div>
-
-            <div className="p-6 max-h-[500px] overflow-y-auto custom-scrollbar bg-gray-50">
-              {inbox.length === 0 ? (
-                <div className="text-center py-20">
-                  <p className="text-gray-400 font-black uppercase tracking-[0.2em] italic">Inbox is empty</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {inbox.map((msg, idx) => (
-                    <div
-                      key={`${msg.userEmail}-${msg.serviceId}-${idx}`}
-                      className="p-5 bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md hover:border-cyan-200 transition-all cursor-pointer group"
-                      onClick={() => {
-                        setActiveChat({ userEmail: msg.userEmail, serviceId: msg.serviceId, serviceName: msg.serviceName });
-                        setShowMessages(false);
-                      }}
-                    >
-                      <div className="flex justify-between items-start">
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 bg-gradient-to-r from-cyan-50 to-purple-50 text-purple-600 rounded-2xl flex items-center justify-center font-black text-xl group-hover:bg-gradient-to-r group-hover:from-cyan-500 group-hover:to-purple-600 group-hover:text-white transition-all">
-                            {msg.userEmail[0].toUpperCase()}
-                          </div>
-                          <div>
-                            <p className="font-black text-gray-900 leading-tight mb-0.5">{msg.userEmail}</p>
-                            <span className="text-[10px] font-black bg-gradient-to-r from-cyan-50 to-purple-50 text-purple-600 px-2 py-0.5 rounded-md uppercase tracking-wider">
-                              {msg.serviceName}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="text-right flex flex-col items-end">
-                          {msg.unreadCount > 0 && (
-                            <span className="w-5 h-5 bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center mb-2 ring-2 ring-white">
-                              {msg.unreadCount}
-                            </span>
-                          )}
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Last Activity</p>
-                          <p className="text-xs font-bold text-slate-600">
-                            {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </p>
-                        </div>
-                      </div>
-                      <div className={`mt-4 p-3 rounded-xl border-l-4 ${msg.unreadCount > 0 ? 'bg-indigo-50 border-indigo-600 font-bold' : 'bg-slate-50 border-indigo-400'}`}>
-                        <p className={`text-sm ${msg.unreadCount > 0 ? 'text-indigo-900' : 'text-slate-600'} italic line-clamp-1`}>{msg.content}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </Card>
-        </div>
-      )}
-
-      {/* Global Chat Overlay (Admin Side) */}
-      {activeChat && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
-          <MessageCenter
-            serviceId={activeChat.serviceId}
-            serviceName={activeChat.serviceName}
-            userEmail={activeChat.userEmail}
-            senderRole="admin"
-            onClose={() => setActiveChat(null)}
-          />
-        </div>
-      )}
-      {/* Toast Notification */}
-      {toast && toast.show && (
-        <div className="fixed bottom-8 right-8 z-[200] animate-in slide-in-from-right-10 duration-500">
-          <Card className="bg-white border-l-8 border-l-green-500 shadow-[0_10px_40px_rgba(0,0,0,0.15)] p-5 w-80 rounded-2xl flex items-start gap-4 ring-1 ring-slate-100">
-            <div className="w-10 h-10 bg-green-50 text-green-600 rounded-xl flex items-center justify-center shrink-0">
-              <Bell className="w-6 h-6" />
-            </div>
-            <div className="flex-1 overflow-hidden">
-              <div className="flex justify-between items-center mb-1">
-                <p className="text-[10px] font-black text-green-600 uppercase tracking-widest">Status Update</p>
-                <button onClick={() => setToast(null)} className="text-slate-300 hover:text-slate-500 transition-colors">✕</button>
-              </div>
-              <p className="text-xs font-black text-slate-800 mb-1">Notification Sent</p>
-              <p className="text-xs text-slate-600 font-medium line-clamp-2">{toast.msg}</p>
-            </div>
-          </Card>
-        </div>
-      )}
     </div>
   );
 };
