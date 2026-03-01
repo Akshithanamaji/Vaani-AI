@@ -19,7 +19,21 @@ export const useAudioRecorder = () => {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-            const mediaRecorder = new MediaRecorder(stream);
+            // Pick the best MIME type Groq supports
+            const preferredTypes = [
+                'audio/webm;codecs=opus',
+                'audio/webm',
+                'audio/ogg;codecs=opus',
+                'audio/ogg',
+                'audio/mp4',
+            ];
+            const supportedMime = preferredTypes.find(t => MediaRecorder.isTypeSupported(t)) || '';
+            console.log('[AudioRecorder] Using MIME type:', supportedMime || '(browser default)');
+
+            const mediaRecorder = supportedMime
+                ? new MediaRecorder(stream, { mimeType: supportedMime })
+                : new MediaRecorder(stream);
+
             mediaRecorderRef.current = mediaRecorder;
             chunksRef.current = [];
 
@@ -30,7 +44,10 @@ export const useAudioRecorder = () => {
             };
 
             mediaRecorder.onstop = () => {
-                const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+                // Use the actual mimeType the recorder used, not a hardcoded string
+                const actualMime = mediaRecorder.mimeType || supportedMime || 'audio/webm';
+                const blob = new Blob(chunksRef.current, { type: actualMime });
+                console.log('[AudioRecorder] Blob created:', blob.size, 'bytes, type:', actualMime);
                 setAudioBlob(blob);
 
                 // Stop all tracks

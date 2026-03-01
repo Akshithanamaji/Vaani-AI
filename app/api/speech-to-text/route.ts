@@ -75,16 +75,22 @@ export async function POST(request: NextRequest) {
       'This is a spoken response for an Indian government form. Transcribe accurately.';
 
     // Create FormData for Groq API
+    // Groq uses the file EXTENSION to detect format, so the name MUST match the mimeType
+    const ext = mimeType.includes('mp4') ? 'mp4'
+      : mimeType.includes('ogg') ? 'ogg'
+        : mimeType.includes('mp3') || mimeType.includes('mpeg') ? 'mp3'
+          : 'webm'; // default to webm (chrome/edge default)
+
     const formData = new FormData();
     const audioBlob = new Blob([audioBuffer], { type: mimeType });
-    formData.append('file', audioBlob, 'audio.wav');
+    formData.append('file', audioBlob, `audio.${ext}`);
     formData.append('model', 'whisper-large-v3');
     formData.append('language', language);
     formData.append('prompt', whisperPrompt); // Context hint → key for accuracy
     formData.append('temperature', '0');       // Greedy decoding = most deterministic
 
     console.log(
-      `[SpeechToText] Sending audio to Groq Whisper API (Language: ${language})...`,
+      `[SpeechToText] Sending audio to Groq Whisper API (Language: ${language}, Format: ${mimeType}, File: audio.${ext})...`,
     );
 
     // Call Groq API
@@ -100,10 +106,26 @@ export async function POST(request: NextRequest) {
     );
 
     if (!groqResponse.ok) {
-      const errorData = await groqResponse.json();
-      console.error("[SpeechToText] Groq API error:", errorData);
+      // Read raw text first — Groq sometimes returns non-JSON errors (rate limit HTML pages etc.)
+      const rawText = await groqResponse.text();
+      console.error(`[SpeechToText] Groq API error (${groqResponse.status}):`, rawText);
+
+      let errorData: any = { message: rawText };
+      try { errorData = JSON.parse(rawText); } catch (_) { /* keep raw text */ }
+
+      // Surface rate-limit hint clearly
+      const isRateLimit = groqResponse.status === 429;
+      const isInvalidKey = groqResponse.status === 401;
+
       return NextResponse.json(
-        { error: "Failed to transcribe audio", details: errorData },
+        {
+          error: isRateLimit
+            ? "Groq rate limit reached. Please wait a moment and try again."
+            : isInvalidKey
+              ? "Invalid Groq API key. Check your GROQ_API_KEY in .env.local"
+              : `Groq transcription failed (${groqResponse.status})`,
+          details: errorData,
+        },
         { status: groqResponse.status },
       );
     }
@@ -117,8 +139,9 @@ export async function POST(request: NextRequest) {
       language: language,
       raw: result,
     });
-  } catch (error) {
-    console.error("[SpeechToText] Error:", error);
+  } catch (error: any) {
+    // Log the full error so it appears in the Next.js terminal
+    console.error("[SpeechToText] Unexpected error:", error?.message || error);
     return NextResponse.json(
       {
         error: "Failed to process speech-to-text",

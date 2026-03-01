@@ -586,9 +586,45 @@ export const AdminDashboard = ({ restrictedServiceId, serviceName, adminState, a
                       {field.label}
                     </p>
                     {isFileField ? (
-                      <p className="text-sm font-medium text-gray-700">
-                        {value ? `File info: ${value}` : 'File uploaded by citizen (view original submission if needed).'}
-                      </p>
+                      <div className="mt-2 group relative">
+                        {value && typeof value === 'string' && value.startsWith('data:image') ? (
+                          <div className="flex flex-col gap-3">
+                            <div className="relative group cursor-pointer overflow-hidden rounded-lg border border-gray-200 bg-white inline-block">
+                              <img
+                                src={value}
+                                className="max-h-60 h-auto w-auto object-contain transition-transform group-hover:scale-110"
+                                alt={field.label}
+                                onClick={() => {
+                                  const win = window.open();
+                                  win?.document.write(`<img src="${value}" />`);
+                                }}
+                              />
+                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                                <span className="bg-white/90 px-3 py-1.5 rounded-full text-xs font-bold text-gray-700 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                                  👁️ View Full Size
+                                </span>
+                              </div>
+                            </div>
+                            <p className="text-[10px] text-gray-400 font-mono italic">Document Type: Image Proof</p>
+                          </div>
+                        ) : value && typeof value === 'string' && value.startsWith('data:application/pdf') ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="mt-1 h-12 w-full bg-cyan-50 border-cyan-100 text-cyan-700 hover:bg-cyan-100 font-bold"
+                            onClick={() => {
+                              const win = window.open();
+                              win?.document.write(`<iframe src="${value}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`);
+                            }}
+                          >
+                            📄 View PDF Proof
+                          </Button>
+                        ) : (
+                          <p className="text-sm font-medium text-amber-600 bg-amber-50 p-3 rounded-lg border border-amber-100">
+                            {value ? (typeof value === 'string' && value.length > 50 ? 'Binary Data' : `File: ${value}`) : 'No document uploaded.'}
+                          </p>
+                        )}
+                      </div>
                     ) : isLongText ? (
                       <Textarea
                         value={value}

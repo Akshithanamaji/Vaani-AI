@@ -69,7 +69,7 @@ const ServiceSelectorComponent = ({ onSelectService, language, onServiceSelected
   const [animatedCards, setAnimatedCards] = useState<Set<number>>(new Set());
 
   // Reduced categories for cleaner UI
-  const MAIN_CATEGORIES = ['Identity', 'Finance', 'Health', 'Education', 'Employment', 'Transport'];
+  const MAIN_CATEGORIES = ['Identity', 'Finance', 'Health', 'Education', 'Employment', 'Transport', 'Social', 'Housing', 'Legal', 'Utilities'];
 
   useEffect(() => {
     let filtered = GOVERNMENT_SERVICES;
@@ -94,7 +94,7 @@ const ServiceSelectorComponent = ({ onSelectService, language, onServiceSelected
   // Trigger falling animation for each card one by one
   useEffect(() => {
     setAnimatedCards(new Set()); // Reset animation
-    
+
     filteredServices.forEach((service, index) => {
       setTimeout(() => {
         setAnimatedCards(prev => new Set(prev).add(service.id));
@@ -108,13 +108,13 @@ const ServiceSelectorComponent = ({ onSelectService, language, onServiceSelected
       'en': `You selected ${service.name}. Please fill in your details.`,
       'hi': `आपने ${service.name} को चुना है। कृपया अपने विवरण भरें।`,
       'te': `మీరు ${service.name}ను ఎంచుకున్నారు. దయచేసి మీ వివరాలను పూరించండి.`,
-      'kn': `ನೀವು ${service.name} ಅನ್ನು ಆಯ್ಕೆ ಮಾಡಿದ್ದೀರಿ. ದಯವಿಟ್ಟು ನಿಮ್ಮ ವಿವರಗಳನ್ನು ತುಂಬಿಸಿ.`,
+      'kn': `ನೀವು ${service.name} ಅನ್ನು ಆಯ್కే ಮಾಡಿದ್ದೀರಿ. ದಯವಿಟ್ಟು ನಿಮ್ಮ ವಿವರಗಳನ್ನು ತುಂಬಿಸಿ.`,
       'ta': `நீங்கள் ${service.name}ஐத் தேர்ந்தெடுத்துள்ளீர்கள். தயவுசெய்து உங்கள் விவரங்களை நிரப்பவும்.`,
       'ml': `നിങ്ങൾ ${service.name} തിരഞ്ഞെടുത്തു. ദയവായി നിങ്ങളുടെ വിവരങ്ങൾ പൂരിപ്പിക്കുക.`,
       'mr': `आपण ${service.name} निवडले आहे. कृपया आपली माहिती भरा.`,
       'bn': `আপনি ${service.name} নির্বাচন করেছেন। অনুগ্রহ করে আপনার বিস্তারিত তথ্য পূরণ করুন.`,
       'gu': `તમે ${service.name} પસંદ કર્યું છે. કૃપા કરીને તમારી વિગતો ભરો.`,
-      'or': `ଆପଣ ${service.name} ଚୟନ କରିଛନ୍ତି। ଦୟାକରି ଆପଣଙ୍କର ବିବରଣୀ ପୂରଣ କରନ୍ତୁ।`,
+      'or': `ଆପଣ ${service.name} ଚୟନ କରିଛନ୍ତି। దయచేసి మీ వివరాలను పూరించండి.`,
       'pa': `ਤੁਸੀਂ ${service.name} ਚੁਣਿਆ ਹੈ। ਕਿਰਪਾ ਕਰਕੇ ਆਪਣੇ ਵੇਰਵੇ ਭਰੋ।`,
       'ur': `آپ نے ${service.name} منتخب کیا ہے۔ براہ کرم اپنی تفصیلات بھریں۔`,
     };
@@ -149,6 +149,10 @@ const ServiceSelectorComponent = ({ onSelectService, language, onServiceSelected
       Education: 'Education',
       Employment: 'Employment',
       Transport: 'Transport',
+      Social: 'Social',
+      Housing: 'Housing',
+      Legal: 'Legal',
+      Utilities: 'Utilities',
       searchPlaceholder: '🎤 Speak to fill forms – Aadhaar, PAN, Passport…',
       availableForms: 'Available Forms',
       servicesFound: 'Services Found',
@@ -165,6 +169,10 @@ const ServiceSelectorComponent = ({ onSelectService, language, onServiceSelected
       Education: 'शिक्षा',
       Employment: 'रोजगार',
       Transport: 'परिवहन',
+      Social: 'सामाजिक',
+      Housing: 'आवास',
+      Legal: 'कानूनी',
+      Utilities: 'उपयोगिताएं',
       searchPlaceholder: '🎤 फॉर्म भरने के लिए बोलें – आधार, पैन, पासपोर्ट…',
       availableForms: 'उपलब्ध फॉर्म',
       servicesFound: 'सेवाएं मिलीं',
@@ -181,6 +189,10 @@ const ServiceSelectorComponent = ({ onSelectService, language, onServiceSelected
       Education: 'విద్య',
       Employment: 'ఉద్యోగం',
       Transport: 'రవాణా',
+      Social: 'సామాజిక',
+      Housing: 'గృహనిర్మాణం',
+      Legal: 'చట్టపరమైన',
+      Utilities: 'ఉపయోగాలు',
       searchPlaceholder: '🎤 ఫారమ్‌లను పూరించడానికి మాట్లాడండి – ఆధార్, ప్యాన్, పాస్‌పోర్ట్…',
       availableForms: 'అందుబాటులో ఉన్న ఫారమ్‌లు',
       servicesFound: 'సేవలు కనుగొనబడ్డాయి',
@@ -197,6 +209,10 @@ const ServiceSelectorComponent = ({ onSelectService, language, onServiceSelected
       Education: 'ಶಿಕ್ಷಣ',
       Employment: 'ಉದ್ಯೋಗ',
       Transport: 'ಸಾರಿಗೆ',
+      Social: 'ಸಾಮಾಜಿಕ',
+      Housing: 'ವಸತಿ',
+      Legal: 'ಕಾನೂನು',
+      Utilities: 'ಸೇವೆಗಳು',
       searchPlaceholder: '🎤 ಫಾರ್ಮ್‌ಗಳನ್ನು ತುಂಬಿಸಲು ಮಾತನಾಡಿ – ಆಧಾರ್, ಪ್ಯಾನ್, ಪಾಸ್‌ಪೋರ್ಟ್…',
       availableForms: 'ಲಭ್ಯವಿರುವ ಫಾರ್ಮ್‌ಗಳು',
       servicesFound: 'ಸೇವೆಗಳು ಕಂಡುಬಂದವು',
@@ -213,6 +229,10 @@ const ServiceSelectorComponent = ({ onSelectService, language, onServiceSelected
       Education: 'கல்வி',
       Employment: 'வேலைவாய்ப்பு',
       Transport: 'போக்குவரத்து',
+      Social: 'சமூகம்',
+      Housing: 'வீட்டு வசதி',
+      Legal: 'சட்டம்',
+      Utilities: 'பயன்பாடுகள்',
       searchPlaceholder: '🎤 படிவங்களை நிரப்ப பேசுங்கள் – ஆதார், பான், பாஸ்போர்ட்…',
       availableForms: 'கிடைக்கும் படிவங்கள்',
       servicesFound: 'சேவைகள் கிடைத்தன',
@@ -229,6 +249,10 @@ const ServiceSelectorComponent = ({ onSelectService, language, onServiceSelected
       Education: 'വിദ്യാഭ്യാസം',
       Employment: 'തൊഴിൽ',
       Transport: 'ഗതാഗതം',
+      Social: 'സാമൂഹികം',
+      Housing: 'പാർപ്പിടം',
+      Legal: 'നിയമം',
+      Utilities: 'യൂട്ടിലിറ്റികൾ',
       searchPlaceholder: '🎤 ഫോംകൾ പൂരിപ്പിക്കാൻ സംസാരിക്കുക – ആധാർ, പാൻ, പാസ്പോർട്ട്…',
       availableForms: 'ലഭ്യമായ ഫോമുകൾ',
       servicesFound: 'സേവനങ്ങൾ കണ്ടെത്തി',
@@ -245,6 +269,10 @@ const ServiceSelectorComponent = ({ onSelectService, language, onServiceSelected
       Education: 'शिक्षण',
       Employment: 'रोजगार',
       Transport: 'वाहतूक',
+      Social: 'सामाजिक',
+      Housing: 'गृहनिर्माण',
+      Legal: 'कायदेशीर',
+      Utilities: 'उपयुक्तता',
       searchPlaceholder: '🎤 फॉर्म भरण्यासाठी बोला – आधार, पॅन, पासपोर्ट…',
       availableForms: 'उपलब्ध फॉर्म',
       servicesFound: 'सेवा सापडल्या',
@@ -261,6 +289,10 @@ const ServiceSelectorComponent = ({ onSelectService, language, onServiceSelected
       Education: 'শিক্ষা',
       Employment: 'কর্মসংস্থান',
       Transport: 'পরিবহন',
+      Social: 'সামাজিক',
+      Housing: 'আবাসন',
+      Legal: 'আইনী',
+      Utilities: 'ইউটিলিটি',
       searchPlaceholder: '🎤 ফর্ম পূরণ করতে বলুন – আধার, প্যান, পাসপোর্ট…',
       availableForms: 'উপলব্ধ ফর্ম',
       servicesFound: 'পরিষেবা পাওয়া গেছে',
@@ -277,6 +309,10 @@ const ServiceSelectorComponent = ({ onSelectService, language, onServiceSelected
       Education: 'શિક્ષણ',
       Employment: 'રોજગાર',
       Transport: 'પરિવહન',
+      Social: 'સામાજિક',
+      Housing: 'આવાસ',
+      Legal: 'કાનૂની',
+      Utilities: 'ઉપયોગિતાઓ',
       searchPlaceholder: '🎤 ફોર્મ ભરવા માટે બોલો – આધાર, પૅન, પાસપોર્ટ…',
       availableForms: 'ઉપલબ્ધ ફોર્મ',
       servicesFound: 'સેવાઓ મળી',
@@ -285,7 +321,7 @@ const ServiceSelectorComponent = ({ onSelectService, language, onServiceSelected
     },
     or: {
       title: 'ଭଏସ-ପାୱାର୍ଡ ସରକାରୀ ଫର୍ମ',
-      subtitle: 'ଆପଣଙ୍କ ସ୍ଥାନୀୟ ଭାଷାରେ ଆପଣଙ୍କ ସ୍ୱର ବ୍ୟବହାର କରି ସରକାରୀ ଫର୍ମ ପୂରଣ କରନ୍ତୁ | ଟାଇପ୍ କରିବାର ଆବଶ୍ୟକତା ନାହିଁ |',
+      subtitle: 'ଆପଣଙ୍କ ସ୍ଥାନୀಯ ଭାଷାରେ ଆପଣଙ୍କ ସ୍ୱର ବ୍ୟବହାର କରି ସରକାରୀ ଫର୍ମ ପୂରଣ କରନ୍ତୁ | ଟାଇପ୍ କରିବାର ଆବଶ୍ୟକତା ନାହିଁ |',
       All: 'ସମସ୍ତ ସେବା',
       Identity: 'ପରିଚୟ',
       Finance: 'ଅର୍ଥ',
@@ -293,6 +329,10 @@ const ServiceSelectorComponent = ({ onSelectService, language, onServiceSelected
       Education: 'ଶିକ୍ଷା',
       Employment: 'ରୋଜଗାର',
       Transport: 'ପରିବହନ',
+      Social: 'ସାମାଜିକ',
+      Housing: 'ଗୃହ',
+      Legal: 'ଆଇନଗତ',
+      Utilities: 'ଉପଯୋଗୀ',
       searchPlaceholder: '🎤 ଫର୍ମ ପୂରଣ କରିବାକୁ କୁହନ୍ତୁ – ଆଧାର, ପ୍ୟାନ, ପାସପୋର୍ଟ…',
       availableForms: 'ଉପଲବ୍ଧ ଫର୍ମ',
       servicesFound: 'ସେବା ମିଳିଲା',
@@ -309,6 +349,10 @@ const ServiceSelectorComponent = ({ onSelectService, language, onServiceSelected
       Education: 'ਸਿੱਖਿਆ',
       Employment: 'ਰੁਜ਼ਗਾਰ',
       Transport: 'ਆਵਾਜਾਈ',
+      Social: 'ਸਮਾਜਿਕ',
+      Housing: 'ਰਿਹਾਇਸ਼',
+      Legal: 'ਕਾਨੂੰਨੀ',
+      Utilities: 'ਸਹੂਲਤਾਂ',
       searchPlaceholder: '🎤 ਫਾਰਮ ਭਰਨ ਲਈ ਬੋਲੋ – ਆਧਾਰ, ਪੈਨ, ਪਾਸਪੋਰਟ…',
       availableForms: 'ਉਪਲਬਧ ਫਾਰਮ',
       servicesFound: 'ਸੇਵਾਵਾਂ ਮਿਲੀਆਂ',
@@ -317,7 +361,7 @@ const ServiceSelectorComponent = ({ onSelectService, language, onServiceSelected
     },
     ur: {
       title: 'وائس سے چلنے والے حکومتی فارمز',
-      subtitle: 'اپنی مقامی زبان میں اپنی آواز کا استعمال کرتے ہوئے حکومتی فارمز بھریں۔ ٹائپ کرنے کی ضرورت نہیں ہے۔',
+      subtitle: 'اپنی مقامی زبان میں اپنی آواز کا استعمال کرتے ہوئے حکومતી فارمز بھریں۔ ٹائپ کرنے کی ضرورت نہیں ہے۔',
       All: 'تمام خدمات',
       Identity: 'شناخت',
       Finance: 'مالیات',
@@ -325,6 +369,10 @@ const ServiceSelectorComponent = ({ onSelectService, language, onServiceSelected
       Education: 'تعلیم',
       Employment: 'روزگار',
       Transport: 'نقل و حمل',
+      Social: 'سماجی',
+      Housing: 'ہاؤسنگ',
+      Legal: 'قانونی',
+      Utilities: 'یوٹیلیٹیز',
       searchPlaceholder: '🎤 فارم بھرنے کے لیے بولیں – آدھار، پن، پاسپورٹ…',
       availableForms: 'دستیاب فارم',
       servicesFound: 'خدمات ملیں',
@@ -339,7 +387,7 @@ const ServiceSelectorComponent = ({ onSelectService, language, onServiceSelected
     <div className="min-h-screen bg-black">
       {/* Inject falling animation styles */}
       <style dangerouslySetInnerHTML={{ __html: FALLING_ANIMATION }} />
-      
+
       {/* Hero Section */}
       <div className="max-w-6xl mx-auto px-6 pt-12 pb-16">
         {/* Small Tag */}
@@ -405,7 +453,11 @@ const ServiceSelectorComponent = ({ onSelectService, language, onServiceSelected
               Health: '🏥',
               Education: '📚',
               Employment: '💼',
-              Transport: '🚗'
+              Transport: '🚗',
+              Social: '🤝',
+              Housing: '🏠',
+              Legal: '⚖️',
+              Utilities: '💡'
             };
             return (
               <Button
@@ -418,12 +470,11 @@ const ServiceSelectorComponent = ({ onSelectService, language, onServiceSelected
                   }`}
                 style={{ animationDelay: `${0.32 + ((index + 1) * 0.06)}s` }}
               >
-                {icons[category]} {currentLabels[category] || category}
+                {icons[category] || '📁'} {currentLabels[category] || category}
               </Button>
             );
           })}
         </div>
-
         {/* Services Count */}
         <p className="text-center text-gray-500 text-sm mb-6 card-fall" style={{ animationDelay: '0.74s' }}>
           {filteredServices.length} {currentLabels.servicesFound}
@@ -436,13 +487,12 @@ const ServiceSelectorComponent = ({ onSelectService, language, onServiceSelected
           {filteredServices.map((service, index) => {
             const translatedService = getTranslatedService(service, langCode);
             const isAnimated = animatedCards.has(service.id);
-            
+
             return (
               <Card
                 key={service.id}
-                className={`p-4 bg-neutral-900 hover:bg-neutral-800 hover:shadow-xl hover:scale-105 cursor-pointer transition-all duration-300 rounded-2xl group border border-neutral-800 ${
-                  isAnimated ? 'card-fall' : 'opacity-0'
-                }`}
+                className={`p-4 bg-neutral-900 hover:bg-neutral-800 hover:shadow-xl hover:scale-105 cursor-pointer transition-all duration-300 rounded-2xl group border border-neutral-800 ${isAnimated ? 'card-fall' : 'opacity-0'
+                  }`}
                 style={{
                   animationDelay: `${0.8 + (index * 0.08)}s`
                 }}
@@ -468,6 +518,16 @@ const ServiceSelectorComponent = ({ onSelectService, language, onServiceSelected
             <p className="text-neutral-400 text-lg">{currentLabels.noFormsFound}</p>
           </div>
         )}
+      </div>
+
+      {/* Footer / Trust Section */}
+      <div className="max-w-6xl mx-auto px-6 pb-12">
+        <div className="pt-12 border-t border-white/10 text-center">
+          <p className="text-gray-500 text-sm flex items-center justify-center gap-2">
+            <Lock className="w-3.5 h-3.5" />
+            {currentLabels.trustMessage}
+          </p>
+        </div>
       </div>
     </div>
   );

@@ -43,20 +43,21 @@ interface LandingPageProps {
   selectedLanguage: Language | null;
 }
 
-// Voice instructions in all 12 languages - Guide users to first select language
+// Voice instructions — ULTRA SHORT to stay under Google TTS URL limit.
+// Indian script chars encode to 6-9 bytes each, so keep under ~30 native chars.
 const voiceInstructions: Record<string, string> = {
-  en: 'Welcome to Vaani AI. To get started, first click the Start Speaking button and select your language. After selecting your language, you can click Get Started to sign in and fill your government form.',
-  hi: 'वानी एआई में आपका स्वागत है। शुरू करने के लिए, पहले स्टार्ट स्पीकिंग बटन पर क्लिक करें और अपनी भाषा चुनें। भाषा चुनने के बाद, आप साइन इन करने और अपना सरकारी फॉर्म भरने के लिए शुरू करें पर क्लिक कर सकते हैं।',
-  te: 'వానీ AI కు స్వాగతం. ప్రారంభించడానికి, మొదట స్టార్ట్ స్పీకింగ్ బటన్‌ను క్లిక్ చేసి మీ భాషను ఎంచుకోండి. భాషను ఎంచుకున్న తర్వాత, సైన్ ఇన్ చేసి మీ ప్రభుత్వ ఫారమ్ పూరించడానికి ప్రారంభించు‌ను క్లిక్ చేయవచ్చు.',
-  kn: 'ವಾಣಿ AI ಗೆ ಸ್ವಾಗತ. ಪ್ರಾರಂಭಿಸಲು, ಮೊದಲು ಸ್ಟಾರ್ಟ್ ಸ್ಪೀಕಿಂಗ್ ಬಟನ್ ಕ್ಲಿಕ್ ಮಾಡಿ ಮತ್ತು ನಿಮ್ಮ ಭಾಷೆ ಆಯ್ಕೆಮಾಡಿ. ಭಾಷೆ ಆಯ್ಕೆ ಮಾಡಿದ ನಂತರ, ಸೈನ್ ಇನ್ ಮಾಡಲು ಮತ್ತು ನಿಮ್ಮ ಸರ್ಕಾರಿ ಫಾರ್ಮ ಭರ್ತಿ ಮಾಡಲು ಪ್ರಾರಂಭಿಸಿ ಕ್ಲಿಕ್ ಮಾಡಿ.',
-  ta: 'வாணி AI க்கு வரவேற்கிறோம். தொடங்க, முதலில் Start Speaking பட்டனை கிளிக் செய்து உங்கள் மொழியை தேர்ந்தெடுக்கவும். மொழி தேர்ந்தெடுத்த பிறகு, உள்நுழைந்து உங்கள் அரசாங்க படிவத்தை நிரப்ப Get Started ஐ கிளிக் செய்யலாம்.',
-  ml: 'വാണി എAIയിലേക്ക് സ്വാഗതം. ആരംഭിക്കാൻ, ആദ്യം Start Speaking ബട്ടൺ ക്ലിക്ക് ചെയ്ത് നിങ്ങളുടെ ഭാഷ തിരഞ്ഞെടുക്കുക. ഭാഷ തിരഞ്ഞെടുത്ത ശേഷം, സൈൻ ഇൻ ചെയ്ത് നിങ്ങളുടെ സർക്കാർ ഫോം പൂരിപ്പിക്കാൻ Get Started ക്ലിക്ക് ചെയ്യാം.',
-  mr: 'वाणी AI ला स्वागत आहे. सुरु करण्यासाठी, आधी स्टार्ट स्पीकिंग बटणावर क्लिक करा आणि आपली भाषा निवडा. भाषा निवडल्यानंतर, साइन इन करण्यासाठी आणि सरकारी फॉर्म भरण्यासाठी सुरू करा वर क्लिक करा.',
-  bn: 'ভানী AI তে স্বাগতম। শুরু করতে, প্রথমে Start Speaking বোতামে ক্লিক করুন এবং আপনার ভাষা নির্বাচন করুন। ভাষা নির্বাচনের পর, সাইন ইন করতে এবং আপনার সরকারী ফর্ম পূরণ করতে Get Started ক্লিক করুন।',
-  gu: 'વાણી AI માં સ્વાગત છે. શરૂ કરવા, પહેલા Start Speaking બટન પર ક્લિક કરો અને તમારી ભાષા પસંદ કરો. ભાષા પસંદ કર્યા પછી, સાઇન ઇન કરવા અને સરકારી ફોર્મ ભરવા Get Started ક્લિક કરો.',
-  or: 'ଭାଣୀ AI ରେ ସ୍ୱାଗତ। ଆରମ୍ଭ କରିବାକୁ, ପ୍ରଥମେ Start Speaking ବଟନ୍ ଉପରେ କ୍ଲିକ୍ କରନ୍ତୁ ଏବଂ ଆପଣଙ୍କ ଭାଷା ବାଛନ୍ତୁ। ଭାଷା ବାଛିବା ପରେ, ସାଇନ ଇନ ଏବଂ ଆପଣଙ୍କ ସରକାରୀ ଫର୍ମ ଭରିବାକୁ Get Started ଉପରେ କ୍ଲିକ୍ କରନ୍ତୁ।',
-  pa: 'ਵਾਣੀ AI ਵਿੱਚ ਸੁਆਗਤ ਹੈ। ਸ਼ੁਰੂ ਕਰਨ ਲਈ, ਪਹਿਲਾਂ Start Speaking ਬਟਨ ਤੇ ਕਲਿੱਕ ਕਰੋ ਅਤੇ ਆਪਣੀ ਭਾਸ਼ਾ ਚੁਣੋ। ਭਾਸ਼ਾ ਚੁਣਨ ਤੋਂ ਬਾਅਦ, ਸਾਈਨ ਇਨ ਕਰਨ ਅਤੇ ਸਰਕਾਰੀ ਫਾਰਮ ਭਰਨ ਲਈ Get Started ਕਲਿੱਕ ਕਰੋ।',
-  ur: 'وانی AI میں خوش آمدید۔ شروع کرنے کے لیے، پہلے Start Speaking بٹن پر کلک کریں اور اپنی زبان منتخب کریں۔ زبان منتخب کرنے کے بعد، سائن ان کرنے اور سرکاری فارم بھرنے کے لیے Get Started پر کلک کریں۔',
+  en: 'Welcome to Vaani AI. Select your language to begin.',
+  hi: 'वाणी AI में स्वागत। भाषा चुनें और शुरू करें।',
+  te: 'వాది AI కి స్వాగతం. భాష ఎంచుకోండి.',
+  ta: 'வாணி AI வரவேற்கிறோம். மொழி தேர்ந்தெடுக்கவும்.',
+  ml: 'വാണി AIലേക്കു സ്വാഗതം. ഭാഷ തിരഞ്ഞെടുക്കൂ.',
+  kn: 'ವಾಣಿ AIಗೆ ಸ್ವಾಗತ. ಭಾಷೆ ಆಯ್ಕೆ ಮಾಡಿ.',
+  mr: 'वाणी AI मध्ये स्वागत. भाषा निवडा.',
+  bn: 'ভানী AIতে স্বাগতম। ভাষা বেছে নিন।',
+  gu: 'વાણી AIમાં સ્વાગત. ભાષા પસંદ કરો.',
+  or: 'ଭାଣୀ AIରେ ସ୍ୱାଗତ। ଭାଷା ବାଛନ୍ତୁ।',
+  pa: 'ਵਾਣੀ AIਵਿੱਚ ਸੁਆਗਤ। ਭਾਸ਼ਾ ਚੁਣੋ।',
+  ur: 'وانی AI میں خوش آمدید۔ زبان چنیں۔',
 };
 
 // Language confirmation messages in all 12 languages
@@ -761,73 +762,84 @@ export function LandingPage({ onGetStarted, onStartSpeaking, selectedLanguage }:
     }
   };
 
-  // Play voice instructions in ALL 12 languages — queue them ALL at once so they
-  // play back-to-back with ZERO gap. The browser's speechSynthesis queue handles
-  // the sequencing internally, so there is no delay between languages.
+  // Play voice instructions in ALL 12 languages — one by one via TTS proxy
+  // Exact order: English, Hindi, Telugu, Tamil, Malayalam, Kannada, Marathi, Bengali, Gujarati, Odia, Punjabi, Urdu
   const playVoiceInstructions = () => {
     userHasInteracted.current = true;
     if (isPlayingInstructionRef.current) return;
 
-    if (typeof window === 'undefined' || !window.speechSynthesis) {
-      console.warn('Web Speech API not supported in this browser');
-      return;
-    }
-
-    // Cancel anything currently playing
-    window.speechSynthesis.cancel();
+    // Stop everything first
+    stopAudio();
     setIsPlayingInstructionSync(true);
 
-    const languages = ['en', 'hi', 'te', 'kn', 'ta', 'ml', 'mr', 'bn', 'gu', 'or', 'pa', 'ur'];
-    const voices = window.speechSynthesis.getVoices();
+    // Exact order requested by user (line 1 → line 12)
+    const sequence = [
+      { label: 'English', lang: 'en' },
+      { label: 'Hindi', lang: 'hi' },
+      { label: 'Telugu', lang: 'te' },
+      { label: 'Tamil', lang: 'ta' },
+      { label: 'Malayalam', lang: 'ml' },
+      { label: 'Kannada', lang: 'kn' },
+      { label: 'Marathi', lang: 'mr' },
+      { label: 'Bengali', lang: 'bn' },
+      { label: 'Gujarati', lang: 'gu' },
+      { label: 'Odia', lang: 'or' },
+      { label: 'Punjabi', lang: 'pa' },
+      { label: 'Urdu', lang: 'ur' },
+    ];
 
-    const queueAll = () => {
-      // Build and queue every utterance immediately — no waiting for onend
-      languages.forEach((lang, idx) => {
-        const text = voiceInstructions[lang];
-        if (!text) return;
+    let idx = 0;
 
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = langToLocale[lang] || lang;
-        utterance.rate = 0.95;
-        utterance.pitch = 1.0;
-        utterance.volume = 1.0;
+    const playOne = async () => {
+      // Stop if finished or user cancelled
+      if (idx >= sequence.length || !isPlayingInstructionRef.current) {
+        setIsPlayingInstructionSync(false);
+        return;
+      }
 
-        // Pick the best matching voice for this language
-        const allVoices = window.speechSynthesis.getVoices();
-        const matched = allVoices.find(v =>
-          v.lang === langToLocale[lang] ||
-          v.lang.startsWith(lang + '-') ||
-          v.lang.startsWith(langToLocale[lang]?.slice(0, 2) || lang)
-        );
-        if (matched) utterance.voice = matched;
+      const { lang } = sequence[idx];
+      const text = voiceInstructions[lang];
 
-        // Only the LAST utterance's onend resets the state
-        if (idx === languages.length - 1) {
-          utterance.onend = () => setIsPlayingInstructionSync(false);
-          utterance.onerror = () => setIsPlayingInstructionSync(false);
-        }
+      if (!text) {
+        idx++;
+        playOne();
+        return;
+      }
 
-        // Push all utterances into the browser queue at once
-        window.speechSynthesis.speak(utterance);
-      });
+      try {
+        const res = await fetch(`/api/tts-proxy?text=${encodeURIComponent(text)}&lang=${lang}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+
+        pausePreviousAudio();
+        const audio = new Audio(url);
+        audioRef.current = audio;
+        audio.volume = 1;
+
+        const next = () => {
+          URL.revokeObjectURL(url);
+          idx++;
+          if (isPlayingInstructionRef.current) {
+            setTimeout(playOne, 400); // 400ms gap between each language
+          } else {
+            setIsPlayingInstructionSync(false);
+          }
+        };
+
+        audio.onended = next;
+        audio.onerror = next;
+        await audio.play();
+      } catch (err) {
+        console.warn(`TTS skip [${lang}]:`, err);
+        idx++;
+        playOne(); // skip and continue on error
+      }
     };
 
-    // Voices are already loaded → queue immediately
-    if (voices.length > 0) {
-      queueAll();
-    } else {
-      // Wait for voices to load then queue all at once
-      window.speechSynthesis.onvoiceschanged = () => {
-        window.speechSynthesis.onvoiceschanged = null;
-        queueAll();
-      };
-      // Safety fallback if onvoiceschanged never fires (some browsers)
-      setTimeout(() => {
-        if (isPlayingInstructionRef.current && !window.speechSynthesis.speaking) {
-          queueAll();
-        }
-      }, 400);
-    }
+    // Kick off starting with line 1 (English)
+    playOne();
   };
 
   // Play language confirmation message when language is selected

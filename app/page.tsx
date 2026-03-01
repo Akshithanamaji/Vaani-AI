@@ -6,7 +6,10 @@ import { EmailAuth } from '@/components/email-auth';
 import { MainPortal } from '@/components/main-portal';
 import { ProfilePage } from '@/components/profile-page';
 import { LanguageSelector } from '@/components/language-selector';
+import { AiChatbot } from '@/components/ai-chatbot';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { SplashScreen } from '@/components/splash-screen';
+import { AnimatePresence, motion } from 'framer-motion';
 
 type View = 'landing' | 'language-select' | 'auth' | 'portal' | 'profile';
 
@@ -15,6 +18,7 @@ export default function Home() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [showLanguageSelector, setShowLanguageSelector] = useState(false);
   const { selectedLanguage, setSelectedLanguage } = useLanguage();
+  const [showSplash, setShowSplash] = useState(true);
 
   // Initialize voices on component mount
   useEffect(() => {
@@ -86,66 +90,76 @@ export default function Home() {
     setCurrentView('portal');
   };
 
-  if (currentView === 'landing' && !userEmail) { // Only show landing if not logged in
-    return (
-      <>
-        <LandingPage
-          onGetStarted={handleGetStarted}
-          onStartSpeaking={handleStartSpeaking}
-          selectedLanguage={selectedLanguage}
-        />
-        {showLanguageSelector && (
-          <LanguageSelector
-            isOpen={showLanguageSelector}
-            onClose={() => setShowLanguageSelector(false)}
-            onLanguageSelect={handleLanguageSelect}
-          />
-        )}
-      </>
-    );
-  }
-
-  // If we have a user email, but view is 'landing' (e.g. initial load before effect runs, or logic fallthrough),
-  // we should show portal or loading. But effect handles the state update.
-  // The logic below handles specific views.
-
-  if (currentView === 'auth') {
-    return <EmailAuth onAuthSuccess={handleAuthSuccess} language={selectedLanguage} />;
-  }
-
-  if (currentView === 'profile' && userEmail) {
-    return (
-      <div className="relative">
-        <button
-          onClick={handleBackToPortal}
-          className="absolute top-8 left-8 p-2 text-gray-600 hover:text-gray-900 font-medium z-10 flex items-center gap-2"
-        >
-          ← Back to Portal
-        </button>
-        <ProfilePage email={userEmail} onLogout={handleLogout} language={selectedLanguage} />
-      </div>
-    );
-  }
-
-  // Default to portal if authenticated, otherwise loop back to landing
-  if (userEmail) {
-    return (
-      <MainPortal
-        userEmail={userEmail}
-        onLogout={handleLogout}
-        onGoToProfile={handleGoToProfile}
-        language={selectedLanguage}
-      />
-    );
-  }
-
-  // Fallback
   return (
-    <LandingPage
-      onGetStarted={handleGetStarted}
-      onStartSpeaking={handleStartSpeaking}
-      selectedLanguage={selectedLanguage}
-    />
+    <AnimatePresence mode="wait">
+      {showSplash ? (
+        <SplashScreen key="splash" onComplete={() => setShowSplash(false)} />
+      ) : (
+        <motion.div
+          key="content"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          {currentView === 'landing' && !userEmail && (
+            <>
+              <LandingPage
+                onGetStarted={handleGetStarted}
+                onStartSpeaking={handleStartSpeaking}
+                selectedLanguage={selectedLanguage}
+              />
+              {showLanguageSelector && (
+                <LanguageSelector
+                  isOpen={showLanguageSelector}
+                  onClose={() => setShowLanguageSelector(false)}
+                  onLanguageSelect={handleLanguageSelect}
+                />
+              )}
+            </>
+          )}
+
+          {currentView === 'auth' && (
+            <>
+              <EmailAuth onAuthSuccess={handleAuthSuccess} language={selectedLanguage} />
+              <AiChatbot userEmail={userEmail} />
+            </>
+          )}
+
+          {currentView === 'profile' && userEmail && (
+            <div className="relative">
+              <button
+                onClick={handleBackToPortal}
+                className="absolute top-8 left-8 p-2 text-gray-600 hover:text-gray-900 font-medium z-10 flex items-center gap-2"
+              >
+                ← Back to Portal
+              </button>
+              <ProfilePage email={userEmail} onLogout={handleLogout} language={selectedLanguage} />
+              <AiChatbot userEmail={userEmail} />
+            </div>
+          )}
+
+          {userEmail && currentView !== 'profile' && currentView !== 'auth' && (
+            <>
+              <MainPortal
+                userEmail={userEmail}
+                onLogout={handleLogout}
+                onGoToProfile={handleGoToProfile}
+                language={selectedLanguage}
+              />
+              <AiChatbot userEmail={userEmail} />
+            </>
+          )}
+
+          {!userEmail && currentView !== 'landing' && currentView !== 'auth' && (
+            <LandingPage
+              onGetStarted={handleGetStarted}
+              onStartSpeaking={handleStartSpeaking}
+              selectedLanguage={selectedLanguage}
+            />
+          )}
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 

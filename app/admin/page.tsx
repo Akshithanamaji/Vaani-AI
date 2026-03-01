@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { AdminDashboard } from '@/components/admin-dashboard';
 import { ADMIN_CREDENTIALS, AdminUser } from '@/lib/admin-auth';
+import { MasterAdminDashboard } from '@/components/master-admin-dashboard';
 import { INDIAN_STATES } from '@/lib/indian-locations';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -50,19 +51,22 @@ export default function AdminPage() {
         e.preventDefault();
         setError(null);
 
-        // Validate state and district selection
-        if (!selectedState || !selectedDistrict) {
+        const emailLower = email.toLowerCase().trim();
+        const isMasterAdmin = emailLower === 'master.admin@vaani.gov.in';
+
+        // Validate state and district selection only for non-master admins
+        if (!isMasterAdmin && (!selectedState || !selectedDistrict)) {
             setError('Please select your State and District to proceed.');
             return;
         }
 
-        const admin = ADMIN_CREDENTIALS[email.toLowerCase().trim()];
+        const admin = ADMIN_CREDENTIALS[emailLower];
 
         if (admin && admin.password === password) {
             const sessionData: AdminSession = {
                 ...admin,
-                selectedState,
-                selectedDistrict
+                selectedState: isMasterAdmin ? 'ALL' : selectedState,
+                selectedDistrict: isMasterAdmin ? 'ALL' : selectedDistrict
             };
             setAdminInfo(sessionData);
             setIsLoggedIn(true);
@@ -87,6 +91,14 @@ export default function AdminPage() {
     }
 
     if (isLoggedIn && adminInfo) {
+        const isMasterAdmin = adminInfo.email.toLowerCase().trim() === 'master.admin@vaani.gov.in';
+
+        if (isMasterAdmin) {
+            return (
+                <MasterAdminDashboard onLogout={handleLogout} />
+            );
+        }
+
         return (
             <div className="min-h-screen bg-black pt-10 px-4">
                 <AdminDashboard
@@ -110,8 +122,8 @@ export default function AdminPage() {
 
             <Card className="w-full max-w-md p-8 bg-white border-0 rounded-[32px] relative z-10">
                 <div className="text-center mb-10">
-                    <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-cyan-500 to-purple-600 rounded-2xl mb-6">
-                        <Lock className="w-8 h-8 text-white" />
+                    <div className="inline-flex items-center justify-center w-20 h-20 bg-white shadow-xl shadow-purple-500/10 rounded-[28px] mb-6 overflow-hidden p-1 border border-gray-100">
+                        <img src="/logo.jpeg" alt="Vaani Logo" className="w-full h-full object-cover rounded-[24px]" />
                     </div>
                     <h1 className="text-3xl font-black text-gray-900 tracking-tight mb-2">Admin Portal</h1>
                     <p className="text-gray-500 font-medium">Please sign in to access your application management panel</p>
@@ -148,45 +160,50 @@ export default function AdminPage() {
                         </div>
                     </div>
 
-                    <div className="space-y-2">
-                        <label className="text-xs font-black text-gray-500 uppercase tracking-widest ml-1">Select State</label>
-                        <div className="relative">
-                            <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                            <select
-                                value={selectedState}
-                                onChange={(e) => {
-                                    setSelectedState(e.target.value);
-                                    setSelectedDistrict('');
-                                }}
-                                required
-                                className="w-full h-14 pl-12 pr-4 bg-gray-50 border border-gray-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-100 rounded-2xl transition-all appearance-none cursor-pointer text-gray-700"
-                            >
-                                <option value="">-- Select State --</option>
-                                {INDIAN_STATES.map(state => (
-                                    <option key={state.code} value={state.name}>{state.name}</option>
-                                ))}
-                            </select>
-                        </div>
-                    </div>
+                    {/* Hide State and District for Master Admin */}
+                    {email.toLowerCase().trim() !== 'master.admin@vaani.gov.in' && (
+                        <>
+                            <div className="space-y-2">
+                                <label className="text-xs font-black text-gray-500 uppercase tracking-widest ml-1">Select State</label>
+                                <div className="relative">
+                                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                    <select
+                                        value={selectedState}
+                                        onChange={(e) => {
+                                            setSelectedState(e.target.value);
+                                            setSelectedDistrict('');
+                                        }}
+                                        required
+                                        className="w-full h-14 pl-12 pr-4 bg-gray-50 border border-gray-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-100 rounded-2xl transition-all appearance-none cursor-pointer text-gray-700"
+                                    >
+                                        <option value="">-- Select State --</option>
+                                        {INDIAN_STATES.map(state => (
+                                            <option key={state.code} value={state.name}>{state.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
 
-                    <div className="space-y-2">
-                        <label className="text-xs font-black text-gray-500 uppercase tracking-widest ml-1">Select District</label>
-                        <div className="relative">
-                            <Building className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                            <select
-                                value={selectedDistrict}
-                                onChange={(e) => setSelectedDistrict(e.target.value)}
-                                required
-                                disabled={!selectedState}
-                                className="w-full h-14 pl-12 pr-4 bg-gray-50 border border-gray-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-100 rounded-2xl transition-all appearance-none cursor-pointer text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                <option value="">-- Select District --</option>
-                                {availableDistricts.map(district => (
-                                    <option key={district.name} value={district.name}>{district.name}</option>
-                                ))}
-                            </select>
-                        </div>
-                    </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-black text-gray-500 uppercase tracking-widest ml-1">Select District</label>
+                                <div className="relative">
+                                    <Building className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                    <select
+                                        value={selectedDistrict}
+                                        onChange={(e) => setSelectedDistrict(e.target.value)}
+                                        required
+                                        disabled={!selectedState}
+                                        className="w-full h-14 pl-12 pr-4 bg-gray-50 border border-gray-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-100 rounded-2xl transition-all appearance-none cursor-pointer text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        <option value="">-- Select District --</option>
+                                        {availableDistricts.map(district => (
+                                            <option key={district.name} value={district.name}>{district.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+                        </>
+                    )}
 
                     {error && (
                         <div className="p-4 bg-red-50 border border-red-100 rounded-2xl flex items-start gap-3 animate-in fade-in slide-in-from-top-2">

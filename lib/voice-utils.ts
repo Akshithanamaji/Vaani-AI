@@ -91,84 +91,107 @@ export function getTTSLanguage(requestedLanguage: string): string {
 }
 
 let globalAudioInstance: HTMLAudioElement | null = null;
+// Flag set to true when stopSpeaking() is called mid-playback
+let ttsStopRequested = false;
 
 /**
- * Play text using Google Translate TTS via server proxy
- * This works without any language pack installation and bypasses CORS
- * Note: Silently skips if language is not supported by Google TTS
+ * Google TTS has a ~200 character limit per request.
+ * Split text at sentence/clause boundaries into chunks of ≤190 chars.
+ */
+function splitTextIntoChunks(text: string, maxLen: number = 190): string[] {
+  const chunks: string[] = [];
+  let remaining = text.trim();
+
+  while (remaining.length > maxLen) {
+    const segment = remaining.substring(0, maxLen);
+    let splitAt = -1;
+
+    // Look for sentence-ending punctuation across scripts (Devanagari, Latin, Arabic, etc.)
+    const matches = [...segment.matchAll(/[।॥|.?!،۔;]/g)];
+    if (matches.length > 0) {
+      splitAt = matches[matches.length - 1].index! + 1;
+    }
+
+    // Fallback: split at last comma or space within limit
+    if (splitAt <= 0) {
+      const commaIdx = segment.lastIndexOf(",");
+      const spaceIdx = segment.lastIndexOf(" ");
+      splitAt = commaIdx > 0 ? commaIdx + 1 : spaceIdx > 0 ? spaceIdx + 1 : maxLen;
+    }
+
+    chunks.push(remaining.substring(0, splitAt).trim());
+    remaining = remaining.substring(splitAt).trim();
+  }
+
+  if (remaining.length > 0) {
+    chunks.push(remaining);
+  }
+
+  return chunks.filter((c) => c.length > 0);
+}
+
+/**
+ * Play a single text chunk via the TTS proxy.
+ * Resolves when audio ends, errors, or stop is requested.
+ */
+function playChunk(chunk: string, langCode: string): Promise<void> {
+  return new Promise((resolve) => {
+    if (ttsStopRequested) { resolve(); return; }
+
+    const encodedText = encodeURIComponent(chunk);
+    const proxyUrl = `/api/tts-proxy?text=${encodedText}&lang=${langCode}`;
+
+    if (globalAudioInstance) {
+      globalAudioInstance.pause();
+      globalAudioInstance.currentTime = 0;
+    }
+
+    const audio = new Audio(proxyUrl);
+    globalAudioInstance = audio;
+
+    audio.onended = () => resolve();
+    audio.onerror = (err) => {
+      console.error(`[GoogleTTS] Error playing chunk for ${langCode}:`, err);
+      resolve(); // Continue to next chunk even on error
+    };
+    audio.play().catch((err) => {
+      console.error(`[GoogleTTS] Playback error:`, err);
+      resolve();
+    });
+  });
+}
+
+/**
+ * Play text using Google Translate TTS via server proxy.
+ * Automatically splits long text into ≤190-char chunks to stay within
+ * Google TTS character limits and avoid 400 errors.
  */
 async function speakWithGoogleTTS(
   text: string,
   language: string,
 ): Promise<void> {
-  return new Promise((resolve) => {
-    if (!text || text.trim().length === 0) {
-      console.warn("[GoogleTTS] Empty text provided, skipping");
-      resolve();
-      return;
-    }
+  if (!text || text.trim().length === 0) {
+    console.warn("[GoogleTTS] Empty text provided, skipping");
+    return;
+  }
 
-    try {
-      // Extract language code (e.g., 'hi' from 'hi-IN')
-      const langCode = language.split("-")[0];
+  const langCode = language.split("-")[0];
 
-      // Check if language is supported by Google TTS
-      if (!GOOGLE_TTS_SUPPORTED_LANGUAGES.has(langCode)) {
-        console.warn(
-          `[GoogleTTS] Language '${langCode}' is not supported by Google TTS, skipping speech synthesis`,
-        );
-        console.warn(
-          `[GoogleTTS] Supported languages:`,
-          Array.from(GOOGLE_TTS_SUPPORTED_LANGUAGES).join(", "),
-        );
-        resolve();
-        return;
-      }
+  if (!GOOGLE_TTS_SUPPORTED_LANGUAGES.has(langCode)) {
+    console.warn(
+      `[GoogleTTS] Language '${langCode}' is not supported by Google TTS, skipping`,
+    );
+    return;
+  }
 
-      console.log(
-        `[GoogleTTS] Speaking text: "${text.substring(0, 50)}..." in language: ${language}`,
-      );
+  ttsStopRequested = false;
+  const chunks = splitTextIntoChunks(text);
+  console.log(`[GoogleTTS] Speaking ${chunks.length} chunk(s) in ${langCode}, total chars: ${text.length}`);
 
-      // Use our server-side proxy to avoid CORS issues
-      const encodedText = encodeURIComponent(text);
-      const proxyUrl = `/api/tts-proxy?text=${encodedText}&lang=${langCode}`;
-
-      console.log(`[GoogleTTS] Proxy URL: ${proxyUrl.substring(0, 100)}...`);
-
-      // Stop any previously playing global audio
-      if (globalAudioInstance) {
-        globalAudioInstance.pause();
-        globalAudioInstance.currentTime = 0;
-      }
-
-      // Create and play audio element
-      const audio = new Audio(proxyUrl);
-      globalAudioInstance = audio;
-
-      audio.onended = () => {
-        console.log(`[GoogleTTS] Speech completed for ${language}`);
-        resolve();
-      };
-
-      audio.onerror = (error) => {
-        console.error(
-          `[GoogleTTS] Error playing audio for ${language}:`,
-          error,
-        );
-        console.error(`[GoogleTTS] Failed URL:`, proxyUrl.substring(0, 150));
-        resolve(); // Resolve even on error
-      };
-
-      audio.play().catch((error) => {
-        console.error(`[GoogleTTS] Error starting playback:`, error);
-        console.error(`[GoogleTTS] Text was:`, text);
-        resolve();
-      });
-    } catch (error) {
-      console.error("[GoogleTTS] Error in speakWithGoogleTTS:", error);
-      resolve();
-    }
-  });
+  for (const chunk of chunks) {
+    if (ttsStopRequested) break;
+    await playChunk(chunk, langCode);
+  }
 }
 
 /**
@@ -652,6 +675,8 @@ export function speakText(
  * Stop text-to-speech
  */
 export function stopSpeaking(): void {
+  // Signal the chunked TTS loop to stop after the current chunk
+  ttsStopRequested = true;
   if (typeof window !== "undefined" && window.speechSynthesis) {
     window.speechSynthesis.cancel();
   }
