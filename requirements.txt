@@ -1,0 +1,21 @@
+# Python Speech-to-Text Requirements
+# Core dependencies for Groq Whisper API integration
+
+# Web framework for API server
+Flask==2.3.3
+Flask-CORS==4.0.0
+
+# HTTP requests for API calls
+requests==2.31.0
+
+# Audio processing (optional, for advanced audio handling)
+# Uncomment if you need advanced audio processing capabilities
+# pydub==0.25.1
+# numpy==1.24.3
+
+# Environment management (optional but recommended)
+python-dotenv==1.0.0
+
+# For development and testing (optional)
+# pytest==7.4.0
+# pytest-flask==1.2.0

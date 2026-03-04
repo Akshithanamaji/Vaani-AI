@@ -956,9 +956,6 @@ export function LandingPage({ onGetStarted, onStartSpeaking, selectedLanguage }:
               )}
             </div>
             <div className="flex gap-3">
-              <Button onClick={handleStartSpeakingClick} className="bg-gradient-to-r from-cyan-500 to-purple-600 hover:opacity-90 text-white rounded-full px-6 font-semibold border-0">
-                {currentLabels.startSpeaking}
-              </Button>
               <Button onClick={handleGetStartedClick} className={`rounded-full px-6 font-semibold border ${selectedLanguage ? 'bg-white/10 text-white hover:bg-white/20 border-white/20' : 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50 animate-pulse'}`}>
                 {isPlayingInstruction ? '🔊 Listen...' : currentLabels.getStarted}
               </Button>

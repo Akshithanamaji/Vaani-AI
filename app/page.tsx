@@ -19,6 +19,7 @@ export default function Home() {
   const [showLanguageSelector, setShowLanguageSelector] = useState(false);
   const { selectedLanguage, setSelectedLanguage } = useLanguage();
   const [showSplash, setShowSplash] = useState(true);
+  const [hasSelectedLanguage, setHasSelectedLanguage] = useState(false);
 
   // Initialize voices on component mount
   useEffect(() => {
@@ -47,7 +48,21 @@ export default function Home() {
       localStorage.setItem('vaani_user_email', normalizedEmail);
       setCurrentView('portal');
     }
+
+    // Check if language was previously selected
+    const storedLanguage = localStorage.getItem('vaani_language');
+    if (storedLanguage) {
+      setHasSelectedLanguage(true);
+    }
   }, []);
+
+  const handleSplashComplete = () => {
+    setShowSplash(false);
+    // Show language selector if no language has been selected yet
+    if (!hasSelectedLanguage) {
+      setShowLanguageSelector(true);
+    }
+  };
 
   const handleStartSpeaking = () => {
     setShowLanguageSelector(true);
@@ -56,7 +71,8 @@ export default function Home() {
   const handleLanguageSelect = (language: any) => {
     setSelectedLanguage(language);
     setShowLanguageSelector(false);
-    // Stay on landing page but now with selected language
+    setHasSelectedLanguage(true);
+    // After selecting language, show landing page immediately
   };
 
   const handleGetStarted = () => {
@@ -93,7 +109,14 @@ export default function Home() {
   return (
     <AnimatePresence mode="wait">
       {showSplash ? (
-        <SplashScreen key="splash" onComplete={() => setShowSplash(false)} />
+        <SplashScreen key="splash" onComplete={handleSplashComplete} />
+      ) : showLanguageSelector ? (
+        <LanguageSelector
+          key="language-selector"
+          isOpen={showLanguageSelector}
+          onClose={() => setShowLanguageSelector(false)}
+          onLanguageSelect={handleLanguageSelect}
+        />
       ) : (
         <motion.div
           key="content"
@@ -102,20 +125,11 @@ export default function Home() {
           transition={{ duration: 0.5 }}
         >
           {currentView === 'landing' && !userEmail && (
-            <>
-              <LandingPage
-                onGetStarted={handleGetStarted}
-                onStartSpeaking={handleStartSpeaking}
-                selectedLanguage={selectedLanguage}
-              />
-              {showLanguageSelector && (
-                <LanguageSelector
-                  isOpen={showLanguageSelector}
-                  onClose={() => setShowLanguageSelector(false)}
-                  onLanguageSelect={handleLanguageSelect}
-                />
-              )}
-            </>
+            <LandingPage
+              onGetStarted={handleGetStarted}
+              onStartSpeaking={handleStartSpeaking}
+              selectedLanguage={selectedLanguage}
+            />
           )}
 
           {currentView === 'auth' && (
@@ -162,4 +176,3 @@ export default function Home() {
     </AnimatePresence>
   );
 }
-

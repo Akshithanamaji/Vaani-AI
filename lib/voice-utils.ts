@@ -890,7 +890,10 @@ export async function transcribeWithGroqWhisper(
       reader.readAsDataURL(audioBlob);
     });
 
-    const response = await fetch('/api/speech-to-text', {
+    // Use Python Flask server for speech-to-text
+    const STT_SERVER_URL = process.env.NEXT_PUBLIC_STT_SERVER_URL || 'http://localhost:5000';
+    
+    const response = await fetch(`${STT_SERVER_URL}/api/speech-to-text`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
