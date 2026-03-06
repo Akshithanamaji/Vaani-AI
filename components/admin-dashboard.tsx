@@ -148,6 +148,21 @@ export const AdminDashboard = ({ restrictedServiceId, serviceName, adminState, a
     }
   }, [selectedSubmission]);
 
+  // Check camera permissions
+  const checkCameraPermissions = async () => {
+    if (!navigator.permissions) {
+      return { state: 'unknown' };
+    }
+
+    try {
+      const permission = await navigator.permissions.query({ name: 'camera' as PermissionName });
+      return permission;
+    } catch (error) {
+      console.warn('Could not check camera permissions:', error);
+      return { state: 'unknown' };
+    }
+  };
+
   // Camera logic
   useEffect(() => {
     let stream: MediaStream | null = null;
@@ -178,7 +193,14 @@ export const AdminDashboard = ({ restrictedServiceId, serviceName, adminState, a
     };
 
     const startCamera = async () => {
+      // Check if camera API is available
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        alert('Camera API not supported in this browser. Please use a modern browser with HTTPS.');
+        return;
+      }
+
       try {
+        // First attempt: Environment facing camera with specific constraints
         const constraints = {
           video: {
             facingMode: { ideal: 'environment' },
@@ -196,16 +218,54 @@ export const AdminDashboard = ({ restrictedServiceId, serviceName, adminState, a
           requestAnimationFrame(scanQRCode);
         }
       } catch (err) {
-        console.error('Error accessing camera:', err);
+        console.warn('Primary camera access failed:', err);
+        
         try {
-          stream = await navigator.mediaDevices.getUserMedia({ video: true });
+          // Second attempt: Any facing mode camera
+          stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { facingMode: { ideal: 'user' } } 
+          });
           if (videoRef.current) {
             videoRef.current.srcObject = stream;
+            videoRef.current.setAttribute('playsinline', 'true');
             videoRef.current.play();
             requestAnimationFrame(scanQRCode);
           }
-        } catch (e) {
-          console.error('Could not access any camera');
+        } catch (e2) {
+          console.warn('Secondary camera access failed:', e2);
+          
+          try {
+            // Third attempt: Basic video constraints
+            stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            if (videoRef.current) {
+              videoRef.current.srcObject = stream;
+              videoRef.current.setAttribute('playsinline', 'true');
+              videoRef.current.play();
+              requestAnimationFrame(scanQRCode);
+            }
+          } catch (e3) {
+            console.error('All camera access attempts failed:', e3);
+            
+            // Provide user-friendly error message
+            let errorMessage = 'Could not access camera. ';
+            
+            // Type-check the error before accessing properties
+            const errorName = (e3 instanceof Error && 'name' in e3) ? e3.name : '';
+            
+            if (errorName === 'NotFoundError' || errorName === 'DevicesNotFoundError') {
+              errorMessage += 'No camera found on this device.';
+            } else if (errorName === 'NotAllowedError' || errorName === 'PermissionDeniedError') {
+              errorMessage += 'Camera permission denied. Please allow camera access and try again.';
+            } else if (errorName === 'NotSupportedError') {
+              errorMessage += 'Camera not supported by this browser.';
+            } else if (errorName === 'NotReadableError' || errorName === 'TrackStartError') {
+              errorMessage += 'Camera is already in use by another application.';
+            } else {
+              errorMessage += 'Please check camera permissions and ensure you\'re using HTTPS.';
+            }
+            
+            alert(errorMessage);
+          }
         }
       }
     };
@@ -936,7 +996,19 @@ export const AdminDashboard = ({ restrictedServiceId, serviceName, adminState, a
             {sidebarCollapsed ? '•••' : 'Quick Actions'}
           </p>
           <button
-            onClick={() => setScanMode(!scanMode)}
+            onClick={async () => {
+              if (scanMode) {
+                setScanMode(false);
+              } else {
+                // Check permissions before enabling scan mode
+                const permission = await checkCameraPermissions();
+                if (permission.state === 'denied') {
+                  alert('Camera permission is required for QR scanning. Please enable camera access in your browser settings.');
+                  return;
+                }
+                setScanMode(true);
+              }
+            }}
             className={`w-full flex items-center gap-3 ${sidebarCollapsed ? 'justify-center px-2' : 'px-4'} py-3 rounded-xl transition-all ${scanMode ? 'bg-red-500 text-white' : 'text-gray-300 hover:bg-gray-800'
               }`}
           >
