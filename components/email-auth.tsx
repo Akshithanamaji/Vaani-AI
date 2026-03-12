@@ -106,6 +106,8 @@ export function EmailAuth({ onAuthSuccess, language }: EmailAuthProps) {
   const [voiceStatus, setVoiceStatus] = useState('');
   const recognitionRef = useRef<any>(null);
   const hasSpokenRef = useRef(false);
+  const isSpeakingPromptRef = useRef(false);
+  const ignoreUntilRef = useRef(0);
 
   const langCode = language?.code || 'en';
   const t = translations[langCode] || translations['en'];
@@ -142,6 +144,7 @@ export function EmailAuth({ onAuthSuccess, language }: EmailAuthProps) {
 
     stopSpeaking();
     setIsSpeaking(false);
+    isSpeakingPromptRef.current = false;
 
     // Toggle off if already listening to same field
     if (isListening && activeField === field) {
@@ -165,7 +168,16 @@ export function EmailAuth({ onAuthSuccess, language }: EmailAuthProps) {
     // Awaiting it takes several seconds, causing the browser to revoke the user-gesture token,
     // which secretly blocks the microphone from starting (NotAllowedError).
     const prompt = fieldVoicePrompts[field]?.[langCode] || fieldVoicePrompts[field]?.['en'];
-    speakText(prompt, bcp47).catch(e => console.warn(e));
+    const normalizedPrompt = prompt.toLowerCase().replace(/[.,!?।॥]/g, '').trim();
+
+    isSpeakingPromptRef.current = true;
+    speakText(prompt, bcp47).finally(() => {
+      isSpeakingPromptRef.current = false;
+      ignoreUntilRef.current = Date.now() + 1000;
+    }).catch(e => {
+      console.warn(e);
+      isSpeakingPromptRef.current = false;
+    });
 
     setActiveField(field);
     setIsListening(true);
@@ -173,46 +185,61 @@ export function EmailAuth({ onAuthSuccess, language }: EmailAuthProps) {
 
     const recognition = initVoiceRecognition(
       bcp47,
-      async (result) => {
-        if (result.transcript) {
-          const text = result.transcript.trim();
+      async (result: any) => {
+        if (!result.transcript) return;
+        
+        let text = result.transcript.trim();
+        const textLower = text.toLowerCase().replace(/[.,!?।॥]/g, '').trim();
 
-          // Interim results: show exactly what the user is saying live
-          if (!result.isFinal) {
+        if (isSpeakingPromptRef.current || Date.now() < ignoreUntilRef.current) {
+          if (normalizedPrompt.includes(textLower) || textLower.includes(normalizedPrompt)) {
+             return; // ignore prompt echo
+          }
+          if (!result.isFinal) return; // ignore interim during speech
+        }
+
+        if (textLower === normalizedPrompt) return;
+        if (textLower.startsWith(normalizedPrompt) && textLower.length > normalizedPrompt.length) {
+           text = text.substring(prompt.length).trim();
+        }
+
+        if (!text) return;
+
+        // Interim results: show exactly what the user is saying live
+        if (!result.isFinal) {
+          if (field === 'name') setName(text);
+          else if (field === 'phone') setPhone(text);
+          else if (field === 'email') setEmail(text);
+        } else {
+          // Final Result: Call Gemini API to parse and format it cleanly
+          setVoiceStatus('Formatting...');
+          try {
+            const response = await fetch('/api/voice-process', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                transcript: text,
+                language: bcp47,
+                fieldName: field,
+                context: {}
+              })
+            });
+            const data = await response.json();
+            const formattedText = data.success && data.transcript ? data.transcript : text;
+
+            if (field === 'name') setName(formattedText);
+            else if (field === 'phone') setPhone(formattedText);
+            else if (field === 'email') setEmail(formattedText);
+          } catch (e) {
+            // Fallback
             if (field === 'name') setName(text);
             else if (field === 'phone') setPhone(text);
             else if (field === 'email') setEmail(text);
-          } else {
-            // Final Result: Call Gemini API to parse and format it cleanly
-            setVoiceStatus('Formatting...');
-            try {
-              const response = await fetch('/api/voice-process', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  transcript: text,
-                  language: bcp47,
-                  fieldName: field,
-                  context: {}
-                })
-              });
-              const data = await response.json();
-              const formattedText = data.success && data.transcript ? data.transcript : text;
-
-              if (field === 'name') setName(formattedText);
-              else if (field === 'phone') setPhone(formattedText);
-              else if (field === 'email') setEmail(formattedText);
-            } catch (e) {
-              // Fallback
-              if (field === 'name') setName(text);
-              else if (field === 'phone') setPhone(text);
-              else if (field === 'email') setEmail(text);
-            }
-            setVoiceStatus('');
           }
+          setVoiceStatus('');
         }
       },
-      (err) => {
+      (err: any) => {
         console.warn('[VoiceInput] Error:', err);
         setVoiceStatus(''); setIsListening(false); setActiveField(null);
       },
